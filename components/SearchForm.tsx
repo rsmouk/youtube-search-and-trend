@@ -28,6 +28,7 @@ export default function SearchForm({
   onSelectRecent,
 }: SearchFormProps) {
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     const updateHistory = () => setRecentSearches(getRecentSearches());
@@ -64,11 +65,33 @@ export default function SearchForm({
         </button>
       </div>
 
-      <SearchFiltersBar
-        filters={filters}
-        loading={loading}
-        onChange={onFiltersChange}
-      />
+      <div className="mt-3 flex justify-center">
+        <button
+          type="button"
+          onClick={() => setShowFilters((v) => !v)}
+          className="flex items-center gap-1.5 rounded-full border border-stone-200 bg-white px-4 py-2 text-xs text-stone-500 transition-colors hover:border-stone-300 hover:text-stone-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            className={`h-3.5 w-3.5 transition-transform ${showFilters ? "rotate-180" : ""}`}
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+          {showFilters ? "إخفاء الفلاتر" : "إظهار الفلاتر"}
+        </button>
+      </div>
+
+      {showFilters && (
+        <SearchFiltersBar
+          filters={filters}
+          loading={loading}
+          onChange={onFiltersChange}
+        />
+      )}
 
       {recentSearches.length > 0 && (
         <div className="mt-4">

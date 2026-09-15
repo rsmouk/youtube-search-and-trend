@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import CategoryButtons from "@/components/CategoryButtons";
 import TrendingVideoCard from "@/components/TrendingVideoCard";
+import VideoPlayerModal from "@/components/VideoPlayerModal";
 import {
   DEFAULT_TRENDING_PREFS,
   getCountryLabel,
@@ -13,10 +14,13 @@ import {
 } from "@/lib/filters";
 import { getApiKeys } from "@/lib/storage";
 import {
-  getTrendingVideos,
-  getVideoCategories,
-  YouTubeApiError,
-} from "@/lib/youtube";
+  formatCacheRemaining,
+  getCachedTrendingVideos,
+  getCachedVideoCategories,
+  getCacheRemainingMs,
+  getVideosCacheKey,
+} from "@/lib/trending-cache";
+import { YouTubeApiError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 
 export default function TrendingPage() {
@@ -28,6 +32,9 @@ export default function TrendingPage() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [error, setError] = useState("");
+  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(null);
+  const [fromCache, setFromCache] = useState(false);
+  const [cacheRemaining, setCacheRemaining] = useState("");
 
   const loadVideos = useCallback(
     async (region: string, category: string) => {
@@ -35,13 +42,18 @@ export default function TrendingPage() {
       setError("");
       try {
         const apiKeys = getApiKeys();
-        const result = await getTrendingVideos(
+        const { data, fromCache: cached } = await getCachedTrendingVideos(
           region,
           apiKeys,
           category || undefined
         );
-        setVideos(result);
-        if (result.length === 0) {
+        setVideos(data);
+        setFromCache(cached);
+        const remaining = getCacheRemainingMs(
+          getVideosCacheKey(region, category)
+        );
+        setCacheRemaining(formatCacheRemaining(remaining));
+        if (data.length === 0) {
           setError("لا توجد فيديوهات ترند في هذا التصنيف");
         }
       } catch (err) {
@@ -64,7 +76,7 @@ export default function TrendingPage() {
       setError("");
       try {
         const apiKeys = getApiKeys();
-        const cats = await getVideoCategories(region, apiKeys);
+        const { data: cats } = await getCachedVideoCategories(region, apiKeys);
         setCategories(cats);
 
         const validCategory =
@@ -130,6 +142,11 @@ export default function TrendingPage() {
           <p className="mt-2 text-stone-500">
             أكثر الفيديوهات مشاهدة حالياً حسب الدولة والتصنيف
           </p>
+          {fromCache && cacheRemaining && (
+            <p className="mt-2 text-xs text-stone-400">
+              بيانات محفوظة محلياً — تُحدَّث بعد {cacheRemaining}
+            </p>
+          )}
         </section>
 
         <div className="rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm">
@@ -195,12 +212,18 @@ export default function TrendingPage() {
                   key={video.id}
                   video={video}
                   rank={index + 1}
+                  onPlay={setSelectedVideo}
                 />
               ))}
             </div>
           )}
         </section>
       </main>
+
+      <VideoPlayerModal
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+      />
     </>
   );
 }
