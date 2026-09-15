@@ -33,6 +33,13 @@ export interface SavedChannel {
   subscriberCount: string;
   description: string;
   customUrl?: string;
+  publishedAt?: string;
+  country?: string;
+  viewCount?: string;
+  videoCount?: string;
+  hiddenSubscriberCount?: boolean;
+  recentVideoTitle?: string;
+  recentVideoPublishedAt?: string;
   savedAt: string;
 }
 
@@ -45,4 +52,22 @@ export interface SearchResponse {
 export interface ApiError {
   error: string;
   code?: string;
+}
+
+export interface VideoCategory {
+  id: string;
+  title: string;
+}
+
+export interface TrendingVideo {
+  id: string;
+  title: string;
+  description: string;
+  channelId: string;
+  channelTitle: string;
+  publishedAt: string;
+  thumbnail: string;
+  viewCount: string;
+  likeCount?: string;
+  commentCount?: string;
 }

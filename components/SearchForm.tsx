@@ -1,18 +1,47 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import SearchFiltersBar from "@/components/SearchFiltersBar";
+import type { SearchFilters } from "@/lib/filters";
+import {
+  getRecentSearches,
+  SEARCH_HISTORY_CHANGED,
+} from "@/lib/storage";
+
 interface SearchFormProps {
   keyword: string;
   loading: boolean;
+  filters: SearchFilters;
   onKeywordChange: (value: string) => void;
+  onFiltersChange: (filters: SearchFilters) => void;
   onSubmit: (e: React.FormEvent) => void;
+  onSelectRecent?: (keyword: string) => void;
 }
 
 export default function SearchForm({
   keyword,
   loading,
+  filters,
   onKeywordChange,
+  onFiltersChange,
   onSubmit,
+  onSelectRecent,
 }: SearchFormProps) {
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  useEffect(() => {
+    const updateHistory = () => setRecentSearches(getRecentSearches());
+    updateHistory();
+
+    window.addEventListener(SEARCH_HISTORY_CHANGED, updateHistory);
+    window.addEventListener("storage", updateHistory);
+
+    return () => {
+      window.removeEventListener(SEARCH_HISTORY_CHANGED, updateHistory);
+      window.removeEventListener("storage", updateHistory);
+    };
+  }, []);
+
   return (
     <form onSubmit={onSubmit} className="mx-auto w-full max-w-2xl">
       <div className="flex flex-col gap-3 sm:flex-row">
@@ -34,8 +63,34 @@ export default function SearchForm({
           {loading ? "جاري البحث..." : "بحث"}
         </button>
       </div>
+
+      <SearchFiltersBar
+        filters={filters}
+        loading={loading}
+        onChange={onFiltersChange}
+      />
+
+      {recentSearches.length > 0 && (
+        <div className="mt-4">
+          <p className="mb-2 text-xs text-stone-400">آخر عمليات البحث</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {recentSearches.map((term) => (
+              <button
+                key={term}
+                type="button"
+                disabled={loading}
+                onClick={() => onSelectRecent?.(term)}
+                className="rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs text-stone-600 transition-colors hover:border-stone-300 hover:bg-stone-50 hover:text-stone-800 disabled:opacity-50"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <p className="mt-3 text-center text-xs text-stone-400">
-        يعرض القنوات التي نشرت فيديوهات حديثة (آخر 30 يوم) تحتوي على كلمتك
+        يعرض القنوات التي نشرت فيديوهات حديثة تحتوي على كلمتك
       </p>
     </form>
   );

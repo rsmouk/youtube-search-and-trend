@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
-import { getSavedChannels, removeSavedChannel } from "@/lib/storage";
-import { formatCount, formatDate, getChannelUrl } from "@/lib/format";
-import type { SavedChannel } from "@/lib/types";
+import ChannelCard from "@/components/ChannelCard";
+import ChannelDetailsModal from "@/components/ChannelDetailsModal";
+import { savedToChannel } from "@/lib/channel-utils";
+import { getSavedChannels } from "@/lib/storage";
+import type { Channel, SavedChannel } from "@/lib/types";
 
 export default function SavedPage() {
   const [channels, setChannels] = useState<SavedChannel[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
   const loadSaved = () => {
     setChannels(getSavedChannels());
@@ -18,11 +21,6 @@ export default function SavedPage() {
     loadSaved();
     setMounted(true);
   }, []);
-
-  const handleRemove = (id: string) => {
-    removeSavedChannel(id);
-    loadSaved();
-  };
 
   if (!mounted) {
     return (
@@ -57,59 +55,37 @@ export default function SavedPage() {
             </a>
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {channels.map((channel) => (
-              <article
-                key={channel.id}
-                className="flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm"
-              >
-                <div className="flex items-start gap-4 p-4">
-                  <img
-                    src={channel.thumbnail}
-                    alt={channel.title}
-                    className="h-16 w-16 shrink-0 rounded-full border border-stone-100 object-cover"
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <h2 className="text-lg font-medium text-stone-700">
+                القنوات المحفوظة
+              </h2>
+              <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                {channels.length} قناة
+              </span>
+            </div>
+
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {channels.map((saved) => {
+                const channel = savedToChannel(saved);
+                return (
+                  <ChannelCard
+                    key={saved.id}
+                    channel={channel}
+                    onDetails={setSelectedChannel}
+                    onSavedChange={loadSaved}
                   />
-                  <div className="min-w-0 flex-1">
-                    <h3 className="truncate text-base font-semibold text-stone-800">
-                      {channel.title}
-                    </h3>
-                    <p className="mt-1 text-sm text-stone-500">
-                      {formatCount(channel.subscriberCount)} مشترك
-                    </p>
-                    <p className="mt-2 text-xs text-stone-400">
-                      حُفظت {formatDate(channel.savedAt)}
-                    </p>
-                  </div>
-                </div>
-
-                {channel.description && (
-                  <p className="line-clamp-2 px-4 pb-3 text-xs leading-relaxed text-stone-400">
-                    {channel.description}
-                  </p>
-                )}
-
-                <div className="mt-auto grid grid-cols-2 gap-2 border-t border-stone-100 bg-stone-50/60 p-3">
-                  <a
-                    href={getChannelUrl(channel)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-xl bg-stone-800 px-3 py-2 text-center text-xs font-medium text-white hover:bg-stone-700"
-                  >
-                    فتح القناة
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => handleRemove(channel.id)}
-                    className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600 hover:bg-red-100"
-                  >
-                    حذف
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </main>
+
+      <ChannelDetailsModal
+        channel={selectedChannel}
+        onClose={() => setSelectedChannel(null)}
+      />
     </>
   );
 }

@@ -20,6 +20,10 @@ export function formatDate(iso: string | undefined): string {
   });
 }
 
+export function getVideoUrl(videoId: string): string {
+  return `https://www.youtube.com/watch?v=${videoId}`;
+}
+
 export function getChannelUrl(channel: {
   id: string;
   snippet?: { customUrl?: string };

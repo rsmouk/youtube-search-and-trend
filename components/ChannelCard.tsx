@@ -2,6 +2,7 @@
 
 import type { Channel } from "@/lib/types";
 import { formatCount, getChannelUrl } from "@/lib/format";
+import { channelToSaved } from "@/lib/channel-utils";
 import { isChannelSaved, saveChannel, removeSavedChannel } from "@/lib/storage";
 import { useState } from "react";
 
@@ -27,15 +28,7 @@ export default function ChannelCard({
       removeSavedChannel(channel.id);
       setSaved(false);
     } else {
-      saveChannel({
-        id: channel.id,
-        title: channel.snippet.title,
-        thumbnail,
-        subscriberCount: channel.statistics.subscriberCount ?? "0",
-        description: channel.snippet.description,
-        customUrl: channel.snippet.customUrl,
-        savedAt: new Date().toISOString(),
-      });
+      saveChannel(channelToSaved(channel, thumbnail));
       setSaved(true);
     }
     onSavedChange?.();

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { SearchFilters } from "@/lib/filters";
+import { DEFAULT_FILTERS, getSavedFilters, saveFilters } from "@/lib/filters";
 import Header from "@/components/Header";
 import SearchForm from "@/components/SearchForm";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelDetailsModal from "@/components/ChannelDetailsModal";
-import { getApiKeys } from "@/lib/storage";
+import { addRecentSearch, getApiKeys } from "@/lib/storage";
 import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
 
@@ -16,25 +18,40 @@ export default function HomePage() {
   const [channels, setChannels] = useState<Channel[]>([]);
   const [searchedKeyword, setSearchedKeyword] = useState("");
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
 
-  const handleSearch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = keyword.trim();
+  useEffect(() => {
+    setFilters(getSavedFilters());
+  }, []);
+
+  const handleFiltersChange = (next: SearchFilters) => {
+    setFilters(next);
+    saveFilters(next);
+  };
+
+  const runSearch = async (searchTerm: string) => {
+    const trimmed = searchTerm.trim();
     if (!trimmed) return;
 
+    setKeyword(trimmed);
     setLoading(true);
     setError("");
     setChannels([]);
+    addRecentSearch(trimmed);
 
     try {
       const apiKeys = getApiKeys();
-      const result = await searchRecentChannels(trimmed, apiKeys);
+      const result = await searchRecentChannels(trimmed, apiKeys, undefined, filters);
 
       setChannels(result.channels);
       setSearchedKeyword(trimmed);
 
       if (result.channels.length === 0) {
-        setError("لم يتم العثور على قنوات نشرت مؤخراً بهذه الكلمة");
+        setError(
+          filters.channelCountry
+            ? "لا توجد قنوات مطابقة للفلاتر المحددة. جرّب تغيير الدولة أو المنطقة."
+            : "لم يتم العثور على قنوات نشرت مؤخراً بهذه الكلمة"
+        );
       }
     } catch (err) {
       if (err instanceof YouTubeApiError) {
@@ -45,6 +62,11 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    runSearch(keyword);
   };
 
   return (
@@ -63,8 +85,11 @@ export default function HomePage() {
         <SearchForm
           keyword={keyword}
           loading={loading}
+          filters={filters}
           onKeywordChange={setKeyword}
+          onFiltersChange={handleFiltersChange}
           onSubmit={handleSearch}
+          onSelectRecent={runSearch}
         />
 
         {error && (
