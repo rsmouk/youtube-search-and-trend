@@ -9,7 +9,12 @@ export async function POST(request: NextRequest) {
       ? body.apiKeys.filter((k: unknown) => typeof k === "string")
       : [];
 
-    const result = await searchRecentChannels(keyword, apiKeys);
+    const origin =
+      request.headers.get("origin") ??
+      request.headers.get("referer") ??
+      undefined;
+
+    const result = await searchRecentChannels(keyword, apiKeys, origin ?? undefined);
 
     return NextResponse.json({
       channels: result.channels,

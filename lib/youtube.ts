@@ -13,7 +13,45 @@ export class YouTubeApiError extends Error {
   }
 }
 
+export function getYouTubeErrorHelp(message: string, reason?: string): string {
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes("v3datasearchservice.list are blocked") ||
+    lower.includes("requests to this api") ||
+    reason === "forbidden"
+  ) {
+    return (
+      "المفتاح محظور أو غير مفعّل. تأكد من:\n" +
+      "1. تفعيل YouTube Data API v3 في Google Cloud Console\n" +
+      "2. في Credentials → API restrictions → اختر «Restrict key» وفعّل YouTube Data API v3\n" +
+      "3. في Application restrictions → HTTP referrers → أضف نطاق موقعك:\n" +
+      "   localhost:3000/* و your-app.vercel.app/*"
+    );
+  }
+
+  if (
+    lower.includes("referer") ||
+    lower.includes("referrer") ||
+    reason === "API_KEY_HTTP_REFERRER_BLOCKED"
+  ) {
+    return (
+      "المفتاح مقيد بالنطاق (Referrer). أضف نطاق موقعك في Google Cloud:\n" +
+      "Credentials → Application restrictions → HTTP referrers:\n" +
+      "http://localhost:3000/*\n" +
+      "https://your-app.vercel.app/*"
+    );
+  }
+
+  if (reason === "quotaExceeded" || reason === "dailyLimitExceeded") {
+    return "نفدت الحصة اليومية لهذا المفتاح. أضف مفتاحاً آخر أو انتظر حتى منتصف الليل (توقيت Pacific).";
+  }
+
+  return message;
+}
+
 function getEnvKeys(): string[] {
+  if (typeof window !== "undefined") return [];
   const raw = process.env.YOUTUBE_API_KEYS ?? process.env.YOUTUBE_API_KEY ?? "";
   return raw
     .split(",")
@@ -21,15 +59,32 @@ function getEnvKeys(): string[] {
     .filter(Boolean);
 }
 
+function shouldTryNextKey(reason: string | undefined, message: string): boolean {
+  const retryReasons = [
+    "quotaExceeded",
+    "dailyLimitExceeded",
+    "keyInvalid",
+    "forbidden",
+  ];
+  if (reason && retryReasons.includes(reason)) return true;
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("blocked") ||
+    lower.includes("referer") ||
+    lower.includes("quota")
+  );
+}
+
 async function fetchWithKeyRotation<T>(
   buildUrl: (apiKey: string) => string,
-  apiKeys: string[]
+  apiKeys: string[],
+  referer?: string
 ): Promise<T> {
   const keys = [...new Set([...apiKeys, ...getEnvKeys()])];
 
   if (keys.length === 0) {
     throw new YouTubeApiError(
-      "لا يوجد مفتاح API. أضف مفتاحاً من الإعدادات.",
+      "لا يوجد مفتاح API. أضف مفتاحاً من صفحة الإعدادات.",
       400,
       "missing_api_key"
     );
@@ -39,22 +94,31 @@ async function fetchWithKeyRotation<T>(
 
   for (const apiKey of keys) {
     const url = buildUrl(apiKey);
-    const res = await fetch(url, { next: { revalidate: 0 } });
+    const headers: HeadersInit = {};
+    if (referer) {
+      headers.Referer = referer;
+    }
+
+    const res = await fetch(url, { headers, cache: "no-store" });
     const data = await res.json();
 
     if (res.ok) {
       return data as T;
     }
 
-    const reason = data?.error?.errors?.[0]?.reason ?? data?.error?.message;
+    const message = data?.error?.message ?? "فشل طلب YouTube API";
+    const reason =
+      data?.error?.errors?.[0]?.reason ??
+      data?.error?.details?.[0]?.reason ??
+      data?.error?.message;
+
     lastError = new YouTubeApiError(
-      data?.error?.message ?? "فشل طلب YouTube API",
+      getYouTubeErrorHelp(message, reason),
       res.status,
       reason
     );
 
-    const quotaErrors = ["quotaExceeded", "dailyLimitExceeded", "keyInvalid"];
-    if (!quotaErrors.includes(reason ?? "")) {
+    if (!shouldTryNextKey(reason, message)) {
       throw lastError;
     }
   }
@@ -85,7 +149,8 @@ interface ChannelsListResponse {
 
 export async function searchRecentChannels(
   keyword: string,
-  apiKeys: string[]
+  apiKeys: string[],
+  referer?: string
 ): Promise<{ channels: Channel[]; totalResults: number }> {
   const trimmed = keyword.trim();
   if (!trimmed) {
@@ -108,7 +173,8 @@ export async function searchRecentChannels(
       });
       return `${YOUTUBE_API_BASE}/search?${params}`;
     },
-    apiKeys
+    apiKeys,
+    referer ?? (typeof window !== "undefined" ? window.location.origin + "/" : undefined)
   );
 
   const channelMap = new Map<
@@ -141,7 +207,8 @@ export async function searchRecentChannels(
       });
       return `${YOUTUBE_API_BASE}/channels?${params}`;
     },
-    apiKeys
+    apiKeys,
+    referer ?? (typeof window !== "undefined" ? window.location.origin + "/" : undefined)
   );
 
   const channels: Channel[] = (channelsData.items ?? []).map((item) => {

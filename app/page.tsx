@@ -6,6 +6,7 @@ import SearchForm from "@/components/SearchForm";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelDetailsModal from "@/components/ChannelDetailsModal";
 import { getApiKeys } from "@/lib/storage";
+import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
 
 export default function HomePage() {
@@ -27,27 +28,20 @@ export default function HomePage() {
 
     try {
       const apiKeys = getApiKeys();
-      const res = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword: trimmed, apiKeys }),
-      });
+      const result = await searchRecentChannels(trimmed, apiKeys);
 
-      const data = await res.json();
+      setChannels(result.channels);
+      setSearchedKeyword(trimmed);
 
-      if (!res.ok) {
-        setError(data.error ?? "فشل البحث");
-        return;
-      }
-
-      setChannels(data.channels ?? []);
-      setSearchedKeyword(data.keyword ?? trimmed);
-
-      if ((data.channels ?? []).length === 0) {
+      if (result.channels.length === 0) {
         setError("لم يتم العثور على قنوات نشرت مؤخراً بهذه الكلمة");
       }
-    } catch {
-      setError("تعذر الاتصال بالخادم");
+    } catch (err) {
+      if (err instanceof YouTubeApiError) {
+        setError(err.message);
+      } else {
+        setError("تعذر الاتصال بـ YouTube API");
+      }
     } finally {
       setLoading(false);
     }
@@ -74,7 +68,7 @@ export default function HomePage() {
         />
 
         {error && (
-          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 whitespace-pre-line">
             {error}
           </div>
         )}

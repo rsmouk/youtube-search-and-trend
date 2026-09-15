@@ -107,14 +107,56 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        <div className="mt-6 rounded-2xl bg-stone-50 p-5 text-sm leading-relaxed text-stone-500">
-          <p className="font-medium text-stone-700">ملاحظات:</p>
-          <ul className="mt-2 list-inside list-disc space-y-1">
-            <li>المفاتيح تُحفظ في localStorage على جهازك</li>
-            <li>يمكنك أيضاً إضافة YOUTUBE_API_KEYS في Vercel (مفصولة بفاصلة)</li>
-            <li>كل بحث يستخدم طلبين فقط: search + channels</li>
-            <li>تفاصيل القناة تُعرض من نفس البيانات بدون طلب إضافي</li>
-          </ul>
+        <div className="mt-6 space-y-4">
+          <div className="rounded-2xl border border-sky-200 bg-sky-50 p-5 text-sm leading-relaxed text-sky-900">
+            <p className="font-semibold">إعداد Google Cloud (مهم)</p>
+            <ol className="mt-3 list-inside list-decimal space-y-2">
+              <li>
+                فعّل{" "}
+                <a
+                  href="https://console.cloud.google.com/apis/library/youtube.googleapis.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  YouTube Data API v3
+                </a>
+              </li>
+              <li>
+                أنشئ API Key من{" "}
+                <a
+                  href="https://console.cloud.google.com/apis/credentials"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline"
+                >
+                  Credentials
+                </a>
+              </li>
+              <li>
+                API restrictions → Restrict key → اختر{" "}
+                <strong>YouTube Data API v3</strong>
+              </li>
+              <li>
+                Application restrictions → HTTP referrers → أضف:
+                <code className="mt-1 block rounded bg-white px-2 py-1 text-xs">
+                  http://localhost:3000/*
+                </code>
+                <code className="mt-1 block rounded bg-white px-2 py-1 text-xs">
+                  https://your-app.vercel.app/*
+                </code>
+              </li>
+            </ol>
+          </div>
+
+          <div className="rounded-2xl bg-stone-50 p-5 text-sm leading-relaxed text-stone-500">
+            <p className="font-medium text-stone-700">ملاحظات:</p>
+            <ul className="mt-2 list-inside list-disc space-y-1">
+              <li>الطلبات تُرسل من المتصفح مباشرة (Referrer صحيح)</li>
+              <li>المفاتيح تُحفظ في localStorage على جهازك</li>
+              <li>كل بحث = طلبين فقط: search + channels</li>
+            </ul>
+          </div>
         </div>
       </main>
     </>
