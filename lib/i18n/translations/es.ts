@@ -209,6 +209,28 @@ export const es: TranslationDict = {
     featuredHint:
       "Desmarca para ocultar un canal del inicio aunque tenga muchos likes.",
     noEligible: "Ningún canal alcanza este umbral de likes",
+    quotaButton: "Estadísticas de cuota API",
+    quotaTitle: "Cuota de YouTube API",
+    quotaNote:
+      "El uso se rastrea en este sitio (YouTube no expone la cuota restante vía claves API).",
+    quotaDate: "Fecha Pacific {date}",
+    quotaUsed: "Usado",
+    quotaRemaining: "Restante",
+    quotaRequests: "Solicitudes",
+    quotaPercent: "{pct}% usado",
+    quotaLimit: "{limit} unidades/clave/día",
+    quotaPerKey: "Por clave",
+    quotaNoKeys: "No hay claves API configuradas",
+    quotaKeyLine: "{used} usados · {remaining} restantes de {limit} · {requests} llamadas",
+    quotaStatus: {
+      ok: "OK",
+      low: "Bajo",
+      exhausted: "Agotado",
+    },
+    quotaCosts:
+      "Costes: búsqueda 100 · canales/vídeos/categorías 1. Se reinicia a medianoche Pacific.",
+    quotaRefresh: "Actualizar",
+    quotaLoadError: "No se pudo cargar — ejecuta supabase/youtube-api-usage.sql",
   },
   settings: {
     title: "Ajustes",

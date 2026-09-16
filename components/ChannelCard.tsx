@@ -103,7 +103,11 @@ export default function ChannelCard({
       onClick={toggleLike}
       title={liked ? t("likes.unlike") : t("likes.like")}
       aria-label={liked ? t("likes.unlike") : t("likes.like")}
-      className={`flex min-w-9 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 transition-colors disabled:opacity-50 ${
+      className={`flex shrink-0 flex-col items-center justify-center rounded-xl transition-colors disabled:opacity-50 ${
+        likeCount > 0
+          ? "min-h-9 min-w-9 gap-0.5 px-1.5 py-1"
+          : "h-9 w-9"
+      } ${
         liked
           ? "border border-rose-200 bg-rose-50 text-rose-600"
           : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"

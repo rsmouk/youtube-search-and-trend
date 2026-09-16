@@ -205,6 +205,28 @@ export const ar: TranslationDict = {
     featuredHint:
       "ألغِ التمييز لإخفاء القناة من الرئيسية حتى لو كان لديها إعجابات كثيرة.",
     noEligible: "لا توجد قنوات مطابقة لحد الإعجابات بعد",
+    quotaButton: "إحصائيات كوطا API",
+    quotaTitle: "كوطا YouTube API",
+    quotaNote:
+      "الاستهلاك يُتتبع من الموقع (يوتيوب لا يوفّر الكوطا المتبقية عبر مفتاح API).",
+    quotaDate: "تاريخ Pacific {date}",
+    quotaUsed: "المستخدم",
+    quotaRemaining: "المتبقي",
+    quotaRequests: "الطلبات",
+    quotaPercent: "{pct}% مستخدم",
+    quotaLimit: "{limit} وحدة/مفتاح/يوم",
+    quotaPerKey: "لكل مفتاح",
+    quotaNoKeys: "لا توجد مفاتيح API",
+    quotaKeyLine: "{used} مستخدم · {remaining} متبقي من {limit} · {requests} طلب",
+    quotaStatus: {
+      ok: "جيد",
+      low: "منخفض",
+      exhausted: "نفد",
+    },
+    quotaCosts:
+      "التكلفة: بحث 100 · قنوات/فيديوهات/تصنيفات 1 لكل طلب. تتجدد منتصف الليل بتوقيت Pacific.",
+    quotaRefresh: "تحديث",
+    quotaLoadError: "تعذر تحميل الإحصائيات — نفّذ supabase/youtube-api-usage.sql",
   },
   settings: {
     title: "الإعدادات",

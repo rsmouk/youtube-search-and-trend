@@ -1,6 +1,7 @@
 import type { SearchFilters } from "./filters";
 import { DEFAULT_FILTERS } from "./filters";
 import type { Channel, TrendingVideo, VideoCategory } from "./types";
+import { QUOTA_COSTS, recordApiQuotaUsage } from "./youtube-quota";
 
 const YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3";
 
@@ -69,7 +70,8 @@ function shouldTryNextKey(reason: string | undefined, message: string): boolean 
 async function fetchWithKeyRotation<T>(
   buildUrl: (apiKey: string) => string,
   apiKeys: string[],
-  referer?: string
+  referer?: string,
+  quotaCost = 1
 ): Promise<T> {
   const keys = [...new Set([...apiKeys, ...getEnvKeys()])];
 
@@ -90,6 +92,7 @@ async function fetchWithKeyRotation<T>(
     const data = await res.json();
 
     if (res.ok) {
+      void recordApiQuotaUsage(apiKey, quotaCost, 1);
       return data as T;
     }
 
@@ -165,7 +168,8 @@ export async function searchRecentChannels(
       return `${YOUTUBE_API_BASE}/search?${params}`;
     },
     apiKeys,
-    referer
+    referer,
+    QUOTA_COSTS.search
   );
 
   const channelMap = new Map<
@@ -199,7 +203,8 @@ export async function searchRecentChannels(
       return `${YOUTUBE_API_BASE}/channels?${params}`;
     },
     apiKeys,
-    referer
+    referer,
+    QUOTA_COSTS.channels
   );
 
   const channels: Channel[] = (channelsData.items ?? []).map((item) => {
@@ -287,7 +292,8 @@ export async function getVideoCategories(
       return `${YOUTUBE_API_BASE}/videoCategories?${params}`;
     },
     apiKeys,
-    getReferer(referer)
+    getReferer(referer),
+    QUOTA_COSTS.videoCategories
   );
 
   return (data.items ?? [])
@@ -319,7 +325,8 @@ export async function getTrendingVideos(
       return `${YOUTUBE_API_BASE}/videos?${params}`;
     },
     apiKeys,
-    getReferer(referer)
+    getReferer(referer),
+    QUOTA_COSTS.videos
   );
 
   return (data.items ?? []).map((item) => ({

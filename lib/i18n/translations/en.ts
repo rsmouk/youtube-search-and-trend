@@ -203,6 +203,27 @@ export const en = {
     featuredHint:
       "Uncheck featured to hide a channel from the homepage even if it has many likes.",
     noEligible: "No channels match this likes threshold yet",
+    quotaButton: "API quota stats",
+    quotaTitle: "YouTube API quota",
+    quotaNote:
+      "Usage is tracked by this site (YouTube does not expose remaining quota via API keys).",
+    quotaDate: "Pacific date {date}",
+    quotaUsed: "Used",
+    quotaRemaining: "Remaining",
+    quotaRequests: "Requests",
+    quotaPercent: "{pct}% used",
+    quotaLimit: "{limit} units/key/day",
+    quotaPerKey: "Per key",
+    quotaNoKeys: "No API keys configured",
+    quotaKeyLine: "{used} used · {remaining} left of {limit} · {requests} calls",
+    quotaStatus: {
+      ok: "OK",
+      low: "Low",
+      exhausted: "Exhausted",
+    },
+    quotaCosts: "Costs: search 100 · channels/videos/categories 1 unit each. Resets at midnight Pacific.",
+    quotaRefresh: "Refresh",
+    quotaLoadError: "Could not load quota stats — run supabase/youtube-api-usage.sql",
   },
   settings: {
     title: "Settings",

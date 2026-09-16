@@ -7,6 +7,7 @@ import PageHeader from "@/components/PageHeader";
 import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import Pagination from "@/components/Pagination";
 import PageTitle from "@/components/PageTitle";
+import QuotaStatsModal from "@/components/QuotaStatsModal";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import {
@@ -17,6 +18,7 @@ import {
 import { formatCompactCount, formatCount } from "@/lib/format";
 import { pageMain } from "@/lib/layout-classes";
 import { paginateItems } from "@/lib/pagination";
+import type { QuotaStatsResult } from "@/lib/quota-types";
 import { getAdminMinLikes, saveAdminMinLikes } from "@/lib/storage";
 import { useCardLayout } from "@/lib/use-card-layout";
 import { useLocalePath } from "@/lib/use-locale-path";
@@ -34,6 +36,10 @@ export default function AdminView() {
   const [actionError, setActionError] = useState("");
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [quotaOpen, setQuotaOpen] = useState(false);
+  const [quotaLoading, setQuotaLoading] = useState(false);
+  const [quotaError, setQuotaError] = useState("");
+  const [quotaStats, setQuotaStats] = useState<QuotaStatsResult | null>(null);
 
   useEffect(() => {
     setMinLikes(getAdminMinLikes(2));
@@ -80,6 +86,31 @@ export default function AdminView() {
     const next = Number.isFinite(value) ? Math.max(0, value) : 2;
     setMinLikes(next);
     saveAdminMinLikes(next);
+  };
+
+  const loadQuotaStats = async () => {
+    setQuotaLoading(true);
+    setQuotaError("");
+    try {
+      const res = await fetch("/api/admin/quota");
+      const data = await res.json();
+      if (!res.ok) {
+        setQuotaError(data.error ?? t("admin.quotaLoadError"));
+        setQuotaStats(null);
+        return;
+      }
+      setQuotaStats(data as QuotaStatsResult);
+    } catch {
+      setQuotaError(t("admin.quotaLoadError"));
+      setQuotaStats(null);
+    } finally {
+      setQuotaLoading(false);
+    }
+  };
+
+  const openQuotaStats = () => {
+    setQuotaOpen(true);
+    void loadQuotaStats();
   };
 
   const toggleFeatured = async (channelId: string, current: boolean) => {
@@ -129,7 +160,18 @@ export default function AdminView() {
           icon="admin"
           title={t("admin.title")}
           subtitle={t("admin.subtitle")}
-          actions={<LayoutToggle layout={layout} onChange={setLayout} />}
+          actions={
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={openQuotaStats}
+                className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50 sm:text-sm"
+              >
+                {t("admin.quotaButton")}
+              </button>
+              <LayoutToggle layout={layout} onChange={setLayout} />
+            </div>
+          }
         />
 
         {actionError && (
@@ -252,6 +294,15 @@ export default function AdminView() {
           </>
         )}
       </main>
+
+      <QuotaStatsModal
+        open={quotaOpen}
+        loading={quotaLoading}
+        error={quotaError}
+        stats={quotaStats}
+        onClose={() => setQuotaOpen(false)}
+        onRefresh={loadQuotaStats}
+      />
     </>
   );
 }
