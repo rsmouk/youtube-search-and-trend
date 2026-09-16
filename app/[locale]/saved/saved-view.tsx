@@ -1,44 +1,66 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import PageHeader from "@/components/PageHeader";
 import ChannelCard from "@/components/ChannelCard";
 import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
+import Pagination from "@/components/Pagination";
+import PageTitle from "@/components/PageTitle";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { savedToChannel } from "@/lib/channel-utils";
-import { fetchSavedChannels } from "@/lib/saved-service";
-import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
+import { paginateItems } from "@/lib/pagination";
+import { fetchLikedChannels, LIKES_CHANGED } from "@/lib/likes-service";
 import { useCardLayout } from "@/lib/use-card-layout";
 import type { SavedChannel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 import { useLocalePath } from "@/lib/use-locale-path";
 
 export default function SavedView() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { t } = useI18n();
   const lp = useLocalePath();
   const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<SavedChannel[]>([]);
   const [mounted, setMounted] = useState(false);
+  const [page, setPage] = useState(1);
 
-  const loadSaved = async () => {
-    setChannels(await fetchSavedChannels(user?.id));
+  const loadLiked = async () => {
+    if (!user?.id) {
+      setChannels([]);
+      return;
+    }
+    setChannels(await fetchLikedChannels(user.id));
   };
 
   useEffect(() => {
-    loadSaved().then(() => setMounted(true));
+    if (authLoading) return;
+    loadLiked().then(() => setMounted(true));
 
-    const refresh = () => loadSaved();
-    window.addEventListener(SAVED_CHANNELS_CHANGED, refresh);
-    return () => window.removeEventListener(SAVED_CHANNELS_CHANGED, refresh);
-  }, [user?.id]);
+    const refresh = () => loadLiked();
+    window.addEventListener(LIKES_CHANGED, refresh);
+    return () => window.removeEventListener(LIKES_CHANGED, refresh);
+  }, [user?.id, authLoading]);
 
-  if (!mounted) {
+  const pagination = useMemo(() => paginateItems(channels, page), [channels, page]);
+
+  useEffect(() => {
+    if (page > pagination.totalPages) {
+      setPage(pagination.totalPages);
+    }
+  }, [page, pagination.totalPages]);
+
+  const handlePageChange = (next: number) => {
+    setPage(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  if (!mounted || authLoading) {
     return (
       <>
+        <PageTitle title={t("seo.savedTitle")} />
         <Header />
         <main className={pageMain}>
           <div className="h-40 animate-pulse rounded-2xl bg-stone-100" />
@@ -49,6 +71,7 @@ export default function SavedView() {
 
   return (
     <>
+      <PageTitle title={t("seo.savedTitle")} />
       <Header />
       <main className={pageMain}>
         <PageHeader
@@ -67,9 +90,20 @@ export default function SavedView() {
           )}
         </PageHeader>
 
-        {channels.length === 0 ? (
+        {!user ? (
+          <div className="rounded-3xl border border-dashed border-stone-200 bg-white px-6 py-16 text-center">
+            <p className="text-stone-500">{t("likes.loginRequired")}</p>
+            <Link
+              href={lp("/login")}
+              className="mt-4 inline-block rounded-xl bg-stone-800 px-5 py-2.5 text-sm text-white hover:bg-stone-700"
+            >
+              {t("saved.signIn")}
+            </Link>
+          </div>
+        ) : channels.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-stone-200 bg-white px-6 py-16 text-center">
             <p className="text-stone-500">{t("saved.empty")}</p>
+            <p className="mt-2 text-sm text-stone-400">{t("saved.emptyHint")}</p>
             <Link
               href={lp("/")}
               className="mt-4 inline-block rounded-xl bg-stone-800 px-5 py-2.5 text-sm text-white hover:bg-stone-700"
@@ -86,15 +120,24 @@ export default function SavedView() {
             </div>
 
             <div className={cardsContainerClass(layout)}>
-              {channels.map((saved) => (
+              {pagination.items.map((liked) => (
                 <ChannelCard
-                  key={saved.id}
-                  channel={savedToChannel(saved)}
-                  onSavedChange={loadSaved}
+                  key={liked.id}
+                  channel={savedToChannel(liked)}
+                  onLikeChange={loadLiked}
                   variant={layout}
                 />
               ))}
             </div>
+
+            <Pagination
+              page={pagination.currentPage}
+              totalPages={pagination.totalPages}
+              total={pagination.total}
+              start={pagination.start}
+              end={pagination.end}
+              onChange={handlePageChange}
+            />
           </>
         )}
       </main>

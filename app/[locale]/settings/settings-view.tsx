@@ -8,6 +8,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { pageMainLg } from "@/lib/layout-classes";
 import { useLocalePath } from "@/lib/use-locale-path";
+import PageTitle from "@/components/PageTitle";
 
 export default function SettingsView() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -100,6 +101,7 @@ export default function SettingsView() {
   if (authLoading || !isAdmin) {
     return (
       <>
+        <PageTitle title={t("seo.settingsTitle")} />
         <Header />
         <main className={pageMainLg}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
@@ -111,6 +113,7 @@ export default function SettingsView() {
   if (!mounted || loading) {
     return (
       <>
+        <PageTitle title={t("seo.settingsTitle")} />
         <Header />
         <main className={pageMainLg}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
@@ -123,6 +126,7 @@ export default function SettingsView() {
 
   return (
     <>
+      <PageTitle title={t("seo.settingsTitle")} />
       <Header />
       <main className={pageMainLg}>
         <PageHeader

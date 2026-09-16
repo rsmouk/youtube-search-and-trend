@@ -39,6 +39,19 @@ export function formatCount(value: string | number | undefined): string {
   return NUMBER_FORMAT.format(num);
 }
 
+/** Compact count for likes (shows 0, uses K/M). */
+export function formatCompactCount(value: string | number | undefined): string {
+  const num = parseCount(value) ?? 0;
+  if (num <= 0) return "0";
+  if (num >= 1_000_000) {
+    return `${(num / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+  if (num >= 1_000) {
+    return `${(num / 1_000).toFixed(1).replace(/\.0$/, "")}K`;
+  }
+  return NUMBER_FORMAT.format(num);
+}
+
 /** Full number with Western digits, no K/M abbreviation */
 export function formatPlainCount(value: string | number | undefined): string {
   const num = parseCount(value);

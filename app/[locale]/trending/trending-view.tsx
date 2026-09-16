@@ -31,6 +31,7 @@ import { useLocalePath } from "@/lib/use-locale-path";
 import { translateYouTubeError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
+import PageTitle from "@/components/PageTitle";
 
 export default function TrendingView() {
   const { t, locale } = useI18n();
@@ -173,14 +174,10 @@ export default function TrendingView() {
       : t("seo.trendingTitle", { country });
   }, [categoryId, locale, regionCode, t]);
 
-  useEffect(() => {
-    if (!mounted) return;
-    document.title = `${pageHeading} | ${t("seo.siteName")}`;
-  }, [mounted, pageHeading, t]);
-
   if (!mounted) {
     return (
       <>
+        <PageTitle title={pageHeading} />
         <Header />
         <main className={pageMain}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
@@ -191,6 +188,7 @@ export default function TrendingView() {
 
   return (
     <>
+      <PageTitle title={pageHeading} />
       <Header />
       <main className={pageMain}>
         <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

@@ -15,6 +15,7 @@ import {
 import { getCountryOptions } from "@/lib/filters";
 import { pageMain } from "@/lib/layout-classes";
 import { useCardLayout } from "@/lib/use-card-layout";
+import PageTitle from "@/components/PageTitle";
 
 export default function ChannelsPage() {
   const { t, locale } = useI18n();
@@ -47,6 +48,7 @@ export default function ChannelsPage() {
 
   return (
     <>
+      <PageTitle title={t("seo.channelsTitle")} />
       <Header />
       <main className={pageMain}>
         <PageHeader

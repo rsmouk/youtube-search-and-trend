@@ -9,8 +9,6 @@ import {
 } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
-import { syncLocalSavesToDb } from "@/lib/channels-db";
-import { getSavedChannels, SAVED_CHANNELS_CHANGED } from "@/lib/storage";
 
 interface Profile {
   id: string;
@@ -85,14 +83,6 @@ export default function AuthProvider({
     if (user) await fetchProfile(user.id);
   }, [user, fetchProfile]);
 
-  const syncLocalOnLogin = useCallback(async (userId: string) => {
-    const local = getSavedChannels();
-    if (local.length > 0) {
-      await syncLocalSavesToDb(userId, local);
-      window.dispatchEvent(new CustomEvent(SAVED_CHANNELS_CHANGED));
-    }
-  }, []);
-
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
@@ -106,7 +96,6 @@ export default function AuthProvider({
       setUser(currentUser);
       if (currentUser) {
         await fetchProfile(currentUser.id);
-        await syncLocalOnLogin(currentUser.id);
       }
       setLoading(false);
     };
@@ -114,14 +103,11 @@ export default function AuthProvider({
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const nextUser = session?.user ?? null;
       setUser(nextUser);
       if (nextUser) {
         await fetchProfile(nextUser.id);
-        if (event === "SIGNED_IN") {
-          await syncLocalOnLogin(nextUser.id);
-        }
       } else {
         setProfile(null);
       }
@@ -129,7 +115,7 @@ export default function AuthProvider({
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, fetchProfile, syncLocalOnLogin]);
+  }, [supabase, fetchProfile]);
 
   const signOut = async () => {
     if (supabase) await supabase.auth.signOut();

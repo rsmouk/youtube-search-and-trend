@@ -8,19 +8,21 @@ import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { getCachedChannel } from "@/lib/channel-cache";
 import { getSiteChannelById, siteRowToChannel } from "@/lib/channels-db";
-import { channelToSaved } from "@/lib/channel-utils";
-import { formatCount, formatDate, formatPlainCount, getChannelUrl } from "@/lib/format";
+import { formatCompactCount, formatCount, formatDate, formatPlainCount, getChannelUrl } from "@/lib/format";
 import { getCountryLabel } from "@/lib/filters";
 import { shareChannelPage } from "@/lib/share";
 import type { RssVideo } from "@/lib/youtube-rss";
 import { pageMainChannel } from "@/lib/layout-classes";
 import {
-  checkChannelSaved,
-  removeChannelForUser,
-  saveChannelForUser,
-} from "@/lib/saved-service";
+  checkChannelLiked,
+  fetchLikeCount,
+  LIKES_CHANGED,
+  toggleChannelLike,
+} from "@/lib/likes-service";
 import { useLocalePath } from "@/lib/use-locale-path";
 import type { Channel } from "@/lib/types";
+import LoginPromptModal from "@/components/LoginPromptModal";
+import PageTitle from "@/components/PageTitle";
 
 export default function ChannelView({ channelId }: { channelId: string }) {
   const { user } = useAuth();
@@ -31,19 +33,23 @@ export default function ChannelView({ channelId }: { channelId: string }) {
   const [loading, setLoading] = useState(true);
   const [videosLoading, setVideosLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [loginPrompt, setLoginPrompt] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
 
   useEffect(() => {
     Promise.all([
       getSiteChannelById(channelId),
       fetch(`/api/channel/${channelId}/videos`).then((r) => r.json()),
-    ]).then(([row, rssData]) => {
+      fetchLikeCount(channelId),
+    ]).then(([row, rssData, count]) => {
       const cached = getCachedChannel(channelId);
       if (cached) {
         setChannel(cached);
       } else if (row) {
-        setChannel(siteRowToChannel(row));
+        setChannel({ ...siteRowToChannel(row), likeCount: row.like_count ?? count });
       } else if (rssData.channelName) {
         setChannel({
           id: channelId,
@@ -62,6 +68,7 @@ export default function ChannelView({ channelId }: { channelId: string }) {
       } else {
         setNotFound(true);
       }
+      setLikeCount(row?.like_count ?? count);
       setVideos(rssData.videos ?? []);
       setLoading(false);
       setVideosLoading(false);
@@ -69,28 +76,34 @@ export default function ChannelView({ channelId }: { channelId: string }) {
   }, [channelId]);
 
   useEffect(() => {
-    checkChannelSaved(channelId, user?.id).then(setSaved);
+    checkChannelLiked(channelId, user?.id).then(setLiked);
   }, [channelId, user?.id]);
 
-  useEffect(() => {
-    if (!channel) return;
-    document.title = `${t("seo.channelTitle", { name: channel.snippet.title })} | ${t("seo.siteName")}`;
-  }, [channel, t]);
+  const title = channel
+    ? t("seo.channelTitle", { name: channel.snippet.title })
+    : notFound
+      ? t("channel.notFound")
+      : t("seo.siteName");
 
   const thumbnail =
     channel?.snippet.thumbnails.medium?.url ??
     channel?.snippet.thumbnails.default?.url ??
     "";
 
-  const toggleSave = async () => {
+  const toggleLike = async () => {
     if (!channel) return;
-    if (saved) {
-      await removeChannelForUser(channelId, user?.id);
-      setSaved(false);
-    } else {
-      await saveChannelForUser(channelToSaved(channel, thumbnail), user?.id);
-      setSaved(true);
+    if (!user) {
+      setLoginPrompt(true);
+      return;
     }
+    if (likeBusy) return;
+    setLikeBusy(true);
+    const result = await toggleChannelLike(channel, user.id, liked);
+    setLikeBusy(false);
+    if (!result) return;
+    setLiked(result.liked);
+    setLikeCount(result.likeCount);
+    window.dispatchEvent(new CustomEvent(LIKES_CHANGED));
   };
 
   const handleShare = async () => {
@@ -107,6 +120,7 @@ export default function ChannelView({ channelId }: { channelId: string }) {
   if (loading) {
     return (
       <>
+        <PageTitle title={title} />
         <Header />
         <main className={pageMainChannel}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
@@ -118,6 +132,7 @@ export default function ChannelView({ channelId }: { channelId: string }) {
   if (notFound && !channel) {
     return (
       <>
+        <PageTitle title={title} />
         <Header />
         <main className={`${pageMainChannel} text-center`}>
           <p className="text-stone-500">{t("channel.notFound")}</p>
@@ -133,6 +148,7 @@ export default function ChannelView({ channelId }: { channelId: string }) {
 
   return (
     <>
+      <PageTitle title={title} />
       <Header />
       <main className={pageMainChannel}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
@@ -180,25 +196,29 @@ export default function ChannelView({ channelId }: { channelId: string }) {
             </button>
             <button
               type="button"
-              onClick={toggleSave}
-              title={saved ? t("common.saved") : t("common.save")}
-              aria-label={t("common.save")}
-              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                saved
-                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              disabled={likeBusy}
+              onClick={toggleLike}
+              title={liked ? t("likes.unlike") : t("likes.like")}
+              aria-label={liked ? t("likes.unlike") : t("likes.like")}
+              className={`flex min-w-10 flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 ${
+                liked
+                  ? "bg-rose-50 text-rose-600 border border-rose-200"
                   : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
               }`}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                fill={saved ? "currentColor" : "none"}
+                fill={liked ? "currentColor" : "none"}
                 stroke="currentColor"
                 strokeWidth="2"
                 className="h-4 w-4"
               >
-                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
               </svg>
+              <span className="text-[10px] font-medium leading-none tabular-nums">
+                {formatCompactCount(likeCount)}
+              </span>
             </button>
           </div>
 
@@ -279,6 +299,7 @@ export default function ChannelView({ channelId }: { channelId: string }) {
           )}
         </section>
       </main>
+      <LoginPromptModal open={loginPrompt} onClose={() => setLoginPrompt(false)} />
     </>
   );
 }

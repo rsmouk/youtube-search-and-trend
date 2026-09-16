@@ -3,20 +3,16 @@
 import type { SavedChannel } from "./types";
 
 const API_KEYS_KEY = "youtube_api_keys";
-const SAVED_CHANNELS_KEY = "saved_channels";
 const SEARCH_HISTORY_KEY = "search_history";
 const MAX_SEARCH_HISTORY = 10;
 const SUGGESTED_LAYOUT_KEY = "suggested_layout";
+const ADMIN_MIN_LIKES_KEY = "admin_min_likes";
 
 export type SuggestedLayout = "grid" | "row";
 
-export const SAVED_CHANNELS_CHANGED = "saved-channels-changed";
 export const SEARCH_HISTORY_CHANGED = "search-history-changed";
-
-function notifySavedChange() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new CustomEvent(SAVED_CHANNELS_CHANGED));
-}
+/** @deprecated Use LIKES_CHANGED from likes-service */
+export const SAVED_CHANNELS_CHANGED = "channel-likes-changed";
 
 function notifySearchHistoryChange() {
   if (typeof window === "undefined") return;
@@ -37,41 +33,6 @@ export function getApiKeys(): string[] {
 
 export function saveApiKeys(keys: string[]): void {
   localStorage.setItem(API_KEYS_KEY, JSON.stringify(keys));
-}
-
-export function getSavedChannels(): SavedChannel[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(SAVED_CHANNELS_KEY);
-    if (!raw) return [];
-    return JSON.parse(raw) as SavedChannel[];
-  } catch {
-    return [];
-  }
-}
-
-export function saveChannel(channel: SavedChannel): void {
-  const existing = getSavedChannels();
-  if (existing.some((c) => c.id === channel.id)) return;
-  localStorage.setItem(
-    SAVED_CHANNELS_KEY,
-    JSON.stringify([channel, ...existing])
-  );
-  notifySavedChange();
-}
-
-export function removeSavedChannel(id: string): void {
-  const filtered = getSavedChannels().filter((c) => c.id !== id);
-  localStorage.setItem(SAVED_CHANNELS_KEY, JSON.stringify(filtered));
-  notifySavedChange();
-}
-
-export function getSavedCount(): number {
-  return getSavedChannels().length;
-}
-
-export function isChannelSaved(id: string): boolean {
-  return getSavedChannels().some((c) => c.id === id);
 }
 
 export function getRecentSearches(): string[] {
@@ -110,4 +71,25 @@ export function getSuggestedLayout(): SuggestedLayout {
 
 export function saveSuggestedLayout(layout: SuggestedLayout): void {
   localStorage.setItem(SUGGESTED_LAYOUT_KEY, layout);
+}
+
+export function getAdminMinLikes(defaultValue = 2): number {
+  if (typeof window === "undefined") return defaultValue;
+  try {
+    const raw = localStorage.getItem(ADMIN_MIN_LIKES_KEY);
+    if (!raw) return defaultValue;
+    const n = parseInt(raw, 10);
+    return Number.isFinite(n) && n >= 0 ? n : defaultValue;
+  } catch {
+    return defaultValue;
+  }
+}
+
+export function saveAdminMinLikes(value: number): void {
+  localStorage.setItem(ADMIN_MIN_LIKES_KEY, String(Math.max(0, value)));
+}
+
+/** Local channel saves removed — stubs kept to avoid breakages during migration. */
+export function getSavedChannels(): SavedChannel[] {
+  return [];
 }

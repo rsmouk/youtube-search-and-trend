@@ -8,6 +8,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
 import { useLocalePath } from "@/lib/use-locale-path";
+import PageTitle from "@/components/PageTitle";
 
 function LoginForm() {
   const router = useRouter();
@@ -142,6 +143,7 @@ function LoginForm() {
 
   return (
     <>
+      <PageTitle title={mode === "signup" ? t("login.signupTitle") : t("seo.loginTitle")} />
       <Header />
       <main className={pageMainMd}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">

@@ -16,6 +16,7 @@ import { useCardLayout } from "@/lib/use-card-layout";
 import { translateYouTubeError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
+import PageTitle from "@/components/PageTitle";
 
 const SKELETON_COUNT = 6;
 
@@ -90,6 +91,7 @@ export default function HomePage() {
 
   return (
     <>
+      <PageTitle title={t("seo.homeTitle")} />
       <Header />
       <main className={pageMain}>
         <section className="mb-10 text-center">

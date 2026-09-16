@@ -5,7 +5,7 @@ export const fr: TranslationDict = {
     search: "Recherche",
     trending: "Tendances",
     channels: "Chaînes",
-    saved: "Enregistrés",
+    saved: "Mes likes",
     settings: "Paramètres",
     admin: "Admin",
     login: "Connexion",
@@ -38,6 +38,13 @@ export const fr: TranslationDict = {
     hours: "{h}h {m}m",
     minutes: "{m}m",
   },
+  pagination: {
+    label: "Pagination",
+    prev: "Précédent",
+    next: "Suivant",
+    showing: "Affichage {start}–{end} sur {total}",
+    pageOf: "Page {page} sur {totalPages}",
+  },
   home: {
     title: "Découvrez des chaînes YouTube",
     subtitle:
@@ -53,9 +60,19 @@ export const fr: TranslationDict = {
     search: "Rechercher",
     showFilters: "Afficher les filtres",
     hideFilters: "Masquer les filtres",
-    suggested: "Chaînes suggérées",
+    suggested: "Chaînes les plus aimées",
     gridView: "Vue grille",
     rowView: "Vue liste",
+  },
+  likes: {
+    like: "J'aime",
+    unlike: "Je n'aime plus",
+    count: "{count} likes",
+    loginTitle: "Connectez-vous pour aimer",
+    loginHint:
+      "Créez un compte ou connectez-vous pour aimer des chaînes et les retrouver dans Mes likes.",
+    signIn: "Connexion",
+    loginRequired: "Connectez-vous pour voir vos chaînes aimées",
   },
   filters: {
     title: "Filtres",
@@ -96,14 +113,14 @@ export const fr: TranslationDict = {
     loading: "Chargement…",
   },
   saved: {
-    title: "Chaînes enregistrées",
-    syncedAccount: "Vos chaînes sont enregistrées sur votre compte",
-    localOnly: "Enregistrées localement — connectez-vous pour synchroniser",
+    title: "Mes likes",
+    syncedAccount: "Chaînes que vous avez aimées avec votre compte",
+    localOnly: "Connectez-vous pour aimer des chaînes et les garder ici",
     signIn: "Connexion",
-    empty: "Aucune chaîne enregistrée",
-    emptyHint: "Enregistrez des chaînes pendant votre navigation pour les retrouver ici",
+    empty: "Aucune chaîne aimée pour le moment",
+    emptyHint: "Aimez des chaînes en naviguant pour les retrouver ici",
     startSearch: "Commencer la recherche",
-    removeConfirm: "Retirer des enregistrés",
+    removeConfirm: "Retirer le like",
   },
   channel: {
     notFound: "Chaîne introuvable",
@@ -180,13 +197,18 @@ export const fr: TranslationDict = {
   },
   admin: {
     title: "Panneau admin",
-    subtitle: "Choisissez les chaînes à afficher sur la page d'accueil comme suggestions",
+    subtitle: "Gérer les chaînes de l'accueil selon les likes et le statut vedette",
     allChannels: "Toutes les chaînes",
+    eligibleLikes: "Éligibles par likes",
     featuredOnly: "En vedette uniquement",
-    setFeatured: "Définir comme suggérée",
-    featured: "En vedette ✓",
+    setFeatured: "Afficher en accueil",
+    featured: "Sur l'accueil ✓",
     updateFailed: "Échec de la mise à jour — exécutez supabase/fix-rls.sql dans Supabase",
     searches: "{count} recherches",
+    minLikes: "Likes min.",
+    featuredHint:
+      "Décochez pour masquer une chaîne de l'accueil même avec beaucoup de likes.",
+    noEligible: "Aucune chaîne n'atteint ce seuil de likes",
   },
   settings: {
     title: "Paramètres",
@@ -259,8 +281,8 @@ export const fr: TranslationDict = {
     channelsTitle: "Annuaire de chaînes YouTube",
     channelsDescription:
       "Parcourez toutes les chaînes YouTube découvertes sur ce site, avec filtres et suggestions.",
-    savedTitle: "Chaînes enregistrées",
-    savedDescription: "Vos chaînes YouTube enregistrées au même endroit.",
+    savedTitle: "Mes likes",
+    savedDescription: "Chaînes YouTube que vous avez aimées sur ce site.",
     channelTitle: "{name} — chaîne YouTube",
     channelDescription:
       "Voir les dernières vidéos et stats de {name} sur l'annuaire YouTube.",
@@ -268,13 +290,13 @@ export const fr: TranslationDict = {
       "Profil de chaîne YouTube, statistiques et dernières vidéos.",
     loginTitle: "Connexion",
     loginDescription:
-      "Connectez-vous pour synchroniser vos chaînes enregistrées sur tous vos appareils.",
+      "Connectez-vous pour aimer des chaînes YouTube et les synchroniser.",
     accountTitle: "Mon compte",
     accountDescription: "Gérez votre compte et votre mot de passe.",
     settingsTitle: "Paramètres",
     settingsDescription: "Gérer les clés API YouTube de ce site.",
     adminTitle: "Panneau d'administration",
     adminDescription:
-      "Gérer les chaînes mises en avant sur la page d'accueil.",
+      "Gérer les chaînes de l'accueil selon les likes et le statut vedette.",
   },
 };

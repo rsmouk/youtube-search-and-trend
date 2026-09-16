@@ -2,37 +2,41 @@
 
 import Link from "next/link";
 import type { Channel } from "@/lib/types";
-import { formatCount, getChannelUrl } from "@/lib/format";
+import { formatCompactCount, formatCount, getChannelUrl } from "@/lib/format";
 import { cacheChannel } from "@/lib/channel-cache";
-import { channelToSaved } from "@/lib/channel-utils";
 import { shareChannelPage } from "@/lib/share";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
+import LoginPromptModal from "@/components/LoginPromptModal";
 import {
-  checkChannelSaved,
-  removeChannelForUser,
-  saveChannelForUser,
-} from "@/lib/saved-service";
+  checkChannelLiked,
+  fetchLikeCount,
+  LIKES_CHANGED,
+  toggleChannelLike,
+} from "@/lib/likes-service";
 import { useLocalePath } from "@/lib/use-locale-path";
 import { useEffect, useState } from "react";
 
 interface ChannelCardProps {
   channel: Channel;
-  onSavedChange?: () => void;
+  onLikeChange?: () => void;
   variant?: "grid" | "row";
 }
 
 export default function ChannelCard({
   channel,
-  onSavedChange,
+  onLikeChange,
   variant = "grid",
 }: ChannelCardProps) {
   const { user } = useAuth();
   const { t } = useI18n();
   const lp = useLocalePath();
-  const [saved, setSaved] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(channel.likeCount ?? 0);
   const [checking, setChecking] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
+  const [loginPrompt, setLoginPrompt] = useState(false);
   const thumbnail =
     channel.snippet.thumbnails.medium?.url ??
     channel.snippet.thumbnails.default?.url ??
@@ -41,26 +45,39 @@ export default function ChannelCard({
   useEffect(() => {
     let active = true;
     setChecking(true);
-    checkChannelSaved(channel.id, user?.id).then((isSaved) => {
-      if (active) {
-        setSaved(isSaved);
-        setChecking(false);
-      }
+    setLikeCount(channel.likeCount ?? 0);
+
+    Promise.all([
+      checkChannelLiked(channel.id, user?.id),
+      channel.likeCount === undefined
+        ? fetchLikeCount(channel.id)
+        : Promise.resolve(channel.likeCount),
+    ]).then(([isLiked, count]) => {
+      if (!active) return;
+      setLiked(isLiked);
+      setLikeCount(count);
+      setChecking(false);
     });
+
     return () => {
       active = false;
     };
-  }, [channel.id, user?.id]);
+  }, [channel.id, channel.likeCount, user?.id]);
 
-  const toggleSave = async () => {
-    if (saved) {
-      await removeChannelForUser(channel.id, user?.id);
-      setSaved(false);
-    } else {
-      await saveChannelForUser(channelToSaved(channel, thumbnail), user?.id);
-      setSaved(true);
+  const toggleLike = async () => {
+    if (!user) {
+      setLoginPrompt(true);
+      return;
     }
-    onSavedChange?.();
+    if (busy) return;
+    setBusy(true);
+    const result = await toggleChannelLike(channel, user.id, liked);
+    setBusy(false);
+    if (!result) return;
+    setLiked(result.liked);
+    setLikeCount(result.likeCount);
+    onLikeChange?.();
+    window.dispatchEvent(new CustomEvent(LIKES_CHANGED));
   };
 
   const handleShare = async () => {
@@ -69,7 +86,7 @@ export default function ChannelCard({
       setShareMsg(result === "shared" ? t("common.shared") : t("common.linkCopied"));
       setTimeout(() => setShareMsg(""), 2000);
     } catch {
-      /* user cancelled share */
+      /* cancelled */
     }
   };
 
@@ -78,6 +95,35 @@ export default function ChannelCard({
     : t("common.subscribers", {
         count: formatCount(channel.statistics.subscriberCount),
       });
+
+  const likeButton = (
+    <button
+      type="button"
+      disabled={checking || busy}
+      onClick={toggleLike}
+      title={liked ? t("likes.unlike") : t("likes.like")}
+      aria-label={liked ? t("likes.unlike") : t("likes.like")}
+      className={`flex min-w-9 shrink-0 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 transition-colors disabled:opacity-50 ${
+        liked
+          ? "border border-rose-200 bg-rose-50 text-rose-600"
+          : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+      }`}
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill={liked ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth="2"
+        className="h-4 w-4"
+      >
+        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      </svg>
+      <span className="text-[10px] font-medium leading-none tabular-nums">
+        {formatCompactCount(likeCount)}
+      </span>
+    </button>
+  );
 
   const actions = (
     <div className="relative flex items-center gap-2">
@@ -125,91 +171,71 @@ export default function ChannelCard({
           <line x1="12" x2="12" y1="2" y2="15" />
         </svg>
       </button>
-      <button
-        type="button"
-        disabled={checking}
-        onClick={toggleSave}
-        title={saved ? t("common.saved") : t("common.save")}
-        aria-label={saved ? t("saved.removeConfirm") : t("common.save")}
-        className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition-colors disabled:opacity-50 ${
-          saved
-            ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
-            : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-        }`}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill={saved ? "currentColor" : "none"}
-          stroke="currentColor"
-          strokeWidth="2"
-          className="h-4 w-4"
-        >
-          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-        </svg>
-      </button>
+      {likeButton}
     </div>
   );
 
-  if (variant === "row") {
-    return (
-      <article className="flex flex-col gap-3 rounded-2xl border border-stone-200/80 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center">
-        <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
-            <img
-              src={thumbnail}
-              alt={channel.snippet.title}
-              className="h-12 w-12 shrink-0 rounded-full border border-stone-100 object-cover"
-            />
-          </Link>
-          <div className="min-w-0 flex-1">
-            <Link
-              href={lp(`/channel/${channel.id}`)}
-              onClick={() => cacheChannel(channel)}
-              className="block truncate text-sm font-semibold text-stone-800 hover:text-stone-600"
-            >
-              {channel.snippet.title}
-            </Link>
-            <p className="mt-0.5 text-xs text-stone-500">{subscriberLabel}</p>
-          </div>
-        </div>
-        <div className="shrink-0 overflow-x-auto">{actions}</div>
-      </article>
-    );
-  }
-
   return (
-    <article className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex flex-1 items-start gap-4 p-4">
-        <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
-          <img
-            src={thumbnail}
-            alt={channel.snippet.title}
-            className="h-16 w-16 shrink-0 rounded-full border border-stone-100 object-cover transition-opacity hover:opacity-90"
-          />
-        </Link>
-        <div className="min-w-0 flex-1">
-          <Link
-            href={lp(`/channel/${channel.id}`)}
-            onClick={() => cacheChannel(channel)}
-            className="block truncate text-base font-semibold text-stone-800 hover:text-stone-600"
-          >
-            {channel.snippet.title}
-          </Link>
-          <p className="mt-1 text-sm text-stone-500">{subscriberLabel}</p>
-          <p
-            className={`mt-2 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-stone-400 ${
-              channel.recentVideoTitle ? "" : "invisible"
-            }`}
-          >
-            {channel.recentVideoTitle
-              ? t("common.lastVideo", { title: channel.recentVideoTitle })
-              : "placeholder"}
-          </p>
-        </div>
-      </div>
+    <>
+      {variant === "row" ? (
+        <article className="flex flex-col gap-3 rounded-2xl border border-stone-200/80 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
+              <img
+                src={thumbnail}
+                alt={channel.snippet.title}
+                className="h-12 w-12 shrink-0 rounded-full border border-stone-100 object-cover"
+              />
+            </Link>
+            <div className="min-w-0 flex-1">
+              <Link
+                href={lp(`/channel/${channel.id}`)}
+                onClick={() => cacheChannel(channel)}
+                className="block truncate text-sm font-semibold text-stone-800 hover:text-stone-600"
+              >
+                {channel.snippet.title}
+              </Link>
+              <p className="mt-0.5 text-xs text-stone-500">{subscriberLabel}</p>
+            </div>
+          </div>
+          <div className="shrink-0 overflow-x-auto">{actions}</div>
+        </article>
+      ) : (
+        <article className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex flex-1 items-start gap-4 p-4">
+            <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
+              <img
+                src={thumbnail}
+                alt={channel.snippet.title}
+                className="h-16 w-16 shrink-0 rounded-full border border-stone-100 object-cover transition-opacity hover:opacity-90"
+              />
+            </Link>
+            <div className="min-w-0 flex-1">
+              <Link
+                href={lp(`/channel/${channel.id}`)}
+                onClick={() => cacheChannel(channel)}
+                className="block truncate text-base font-semibold text-stone-800 hover:text-stone-600"
+              >
+                {channel.snippet.title}
+              </Link>
+              <p className="mt-1 text-sm text-stone-500">{subscriberLabel}</p>
+              <p
+                className={`mt-2 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-stone-400 ${
+                  channel.recentVideoTitle ? "" : "invisible"
+                }`}
+              >
+                {channel.recentVideoTitle
+                  ? t("common.lastVideo", { title: channel.recentVideoTitle })
+                  : "placeholder"}
+              </p>
+            </div>
+          </div>
 
-      <div className="mt-auto border-t border-stone-100 bg-stone-50/60 p-3">{actions}</div>
-    </article>
+          <div className="mt-auto border-t border-stone-100 bg-stone-50/60 p-3">{actions}</div>
+        </article>
+      )}
+
+      <LoginPromptModal open={loginPrompt} onClose={() => setLoginPrompt(false)} />
+    </>
   );
 }

@@ -8,6 +8,7 @@ import { useI18n } from "@/components/I18nProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
 import { useLocalePath } from "@/lib/use-locale-path";
+import PageTitle from "@/components/PageTitle";
 
 export default function AccountView() {
   const router = useRouter();
@@ -65,6 +66,7 @@ export default function AccountView() {
   if (authLoading || !user) {
     return (
       <>
+        <PageTitle title={t("seo.accountTitle")} />
         <Header />
         <main className={pageMainMd}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
@@ -75,6 +77,7 @@ export default function AccountView() {
 
   return (
     <>
+      <PageTitle title={t("seo.accountTitle")} />
       <Header />
       <main className={pageMainMd}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">

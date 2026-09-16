@@ -5,7 +5,7 @@ export const es: TranslationDict = {
     search: "Buscar",
     trending: "Tendencias",
     channels: "Canales",
-    saved: "Guardados",
+    saved: "Mis likes",
     settings: "Ajustes",
     admin: "Admin",
     login: "Entrar",
@@ -38,6 +38,13 @@ export const es: TranslationDict = {
     hours: "{h}h {m}m",
     minutes: "{m}m",
   },
+  pagination: {
+    label: "Paginación",
+    prev: "Anterior",
+    next: "Siguiente",
+    showing: "Mostrando {start}–{end} de {total}",
+    pageOf: "Página {page} de {totalPages}",
+  },
   home: {
     title: "Descubre canales de YouTube",
     subtitle:
@@ -53,9 +60,19 @@ export const es: TranslationDict = {
     search: "Buscar",
     showFilters: "Mostrar filtros",
     hideFilters: "Ocultar filtros",
-    suggested: "Canales sugeridos",
+    suggested: "Canales con más likes",
     gridView: "Vista cuadrícula",
     rowView: "Vista lista",
+  },
+  likes: {
+    like: "Me gusta",
+    unlike: "Quitar me gusta",
+    count: "{count} likes",
+    loginTitle: "Inicia sesión para dar like",
+    loginHint:
+      "Crea una cuenta o inicia sesión para dar like a canales y verlos en Mis likes.",
+    signIn: "Iniciar sesión",
+    loginRequired: "Inicia sesión para ver tus canales con like",
   },
   filters: {
     title: "Filtros",
@@ -96,14 +113,14 @@ export const es: TranslationDict = {
     loading: "Cargando…",
   },
   saved: {
-    title: "Canales guardados",
-    syncedAccount: "Tus canales están guardados en tu cuenta",
-    localOnly: "Guardados localmente — inicia sesión para sincronizar",
+    title: "Mis likes",
+    syncedAccount: "Canales a los que diste like con tu cuenta",
+    localOnly: "Inicia sesión para dar like a canales y guardarlos aquí",
     signIn: "Iniciar sesión",
-    empty: "No hay canales guardados",
-    emptyHint: "Guarda canales mientras navegas para encontrarlos aquí",
+    empty: "Aún no hay canales con like",
+    emptyHint: "Da like a canales mientras navegas para encontrarlos aquí",
     startSearch: "Empezar a buscar",
-    removeConfirm: "Quitar de guardados",
+    removeConfirm: "Quitar like",
   },
   channel: {
     notFound: "Canal no encontrado",
@@ -180,13 +197,18 @@ export const es: TranslationDict = {
   },
   admin: {
     title: "Panel de admin",
-    subtitle: "Elige los canales que aparecen en la página principal como sugeridos",
+    subtitle: "Gestiona los canales de inicio por likes y estado destacado",
     allChannels: "Todos los canales",
+    eligibleLikes: "Elegibles por likes",
     featuredOnly: "Solo destacados",
-    setFeatured: "Marcar como sugerido",
-    featured: "Destacado ✓",
+    setFeatured: "Mostrar en inicio",
+    featured: "En inicio ✓",
     updateFailed: "Error al actualizar — ejecuta supabase/fix-rls.sql en Supabase",
     searches: "{count} búsquedas",
+    minLikes: "Likes mín.",
+    featuredHint:
+      "Desmarca para ocultar un canal del inicio aunque tenga muchos likes.",
+    noEligible: "Ningún canal alcanza este umbral de likes",
   },
   settings: {
     title: "Ajustes",
@@ -259,8 +281,8 @@ export const es: TranslationDict = {
     channelsTitle: "Directorio de canales de YouTube",
     channelsDescription:
       "Explora todos los canales de YouTube descubiertos en este sitio, con filtros y destacados.",
-    savedTitle: "Canales guardados",
-    savedDescription: "Tus canales de YouTube guardados en un solo lugar.",
+    savedTitle: "Mis likes",
+    savedDescription: "Canales de YouTube a los que diste like en este sitio.",
     channelTitle: "{name} — canal de YouTube",
     channelDescription:
       "Mira los últimos videos y estadísticas de {name} en el directorio.",
@@ -268,13 +290,13 @@ export const es: TranslationDict = {
       "Perfil de canal de YouTube, estadísticas y últimos videos.",
     loginTitle: "Iniciar sesión",
     loginDescription:
-      "Inicia sesión para sincronizar tus canales guardados en todos tus dispositivos.",
+      "Inicia sesión para dar like a canales de YouTube y sincronizarlos.",
     accountTitle: "Mi cuenta",
     accountDescription: "Administra tu cuenta y contraseña.",
     settingsTitle: "Ajustes",
     settingsDescription: "Administra las claves API de YouTube de este sitio.",
     adminTitle: "Panel de administración",
     adminDescription:
-      "Administra los canales destacados en la página de inicio.",
+      "Gestiona los canales de inicio por likes y estado destacado.",
   },
 };

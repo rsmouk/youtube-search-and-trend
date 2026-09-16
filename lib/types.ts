@@ -24,6 +24,7 @@ export interface Channel {
   statistics: ChannelStatistics;
   recentVideoTitle?: string;
   recentVideoPublishedAt?: string;
+  likeCount?: number;
 }
 
 export interface SavedChannel {

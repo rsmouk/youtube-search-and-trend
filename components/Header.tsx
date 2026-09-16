@@ -8,8 +8,7 @@ import { useI18n } from "@/components/I18nProvider";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import UserMenu from "@/components/UserMenu";
 import NavIcon from "@/components/NavIcon";
-import { fetchSavedCount } from "@/lib/saved-service";
-import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
+import { fetchLikedCount, LIKES_CHANGED } from "@/lib/likes-service";
 import { stripLocale, useLocalePath } from "@/lib/use-locale-path";
 
 type NavLink = {
@@ -25,19 +24,19 @@ export default function Header() {
   const lp = useLocalePath();
   const { user, isAdmin, loading } = useAuth();
   const { t } = useI18n();
-  const [savedCount, setSavedCount] = useState(0);
+  const [likedCount, setLikedCount] = useState(0);
 
   useEffect(() => {
     const updateCount = async () => {
-      setSavedCount(await fetchSavedCount(user?.id));
+      setLikedCount(await fetchLikedCount(user?.id));
     };
     updateCount();
 
-    window.addEventListener(SAVED_CHANNELS_CHANGED, updateCount);
+    window.addEventListener(LIKES_CHANGED, updateCount);
     window.addEventListener("storage", updateCount);
 
     return () => {
-      window.removeEventListener(SAVED_CHANNELS_CHANGED, updateCount);
+      window.removeEventListener(LIKES_CHANGED, updateCount);
       window.removeEventListener("storage", updateCount);
     };
   }, [user?.id]);
@@ -98,7 +97,7 @@ export default function Header() {
                 >
                   <NavIcon name={link.icon} />
                   {t(link.labelKey)}
-                  {link.showCount && savedCount > 0 && (
+                  {link.showCount && likedCount > 0 && (
                     <span
                       className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
                         active
@@ -106,7 +105,7 @@ export default function Header() {
                           : "bg-stone-200 text-stone-600"
                       }`}
                     >
-                      {savedCount}
+                      {likedCount}
                     </span>
                   )}
                 </Link>
@@ -148,7 +147,7 @@ export default function Header() {
             >
               <NavIcon name={link.icon} className="h-3.5 w-3.5" />
               {t(link.labelKey)}
-              {link.showCount && savedCount > 0 && (
+              {link.showCount && likedCount > 0 && (
                 <span
                   className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
                     active
@@ -156,7 +155,7 @@ export default function Header() {
                       : "bg-stone-200 text-stone-600"
                   }`}
                 >
-                  {savedCount}
+                  {likedCount}
                 </span>
               )}
             </Link>
