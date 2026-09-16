@@ -3,10 +3,12 @@
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import CategoryButtons from "@/components/CategoryButtons";
+import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import SearchableSelect from "@/components/SearchableSelect";
 import TrendingVideoCard from "@/components/TrendingVideoCard";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { useI18n } from "@/components/I18nProvider";
+import NavIcon from "@/components/NavIcon";
 import {
   DEFAULT_TRENDING_PREFS,
   getTrendingPrefs,
@@ -21,12 +23,14 @@ import {
   getCacheRemainingMs,
   getVideosCacheKey,
 } from "@/lib/trending-cache";
+import { useCardLayout } from "@/lib/use-card-layout";
 import { translateYouTubeError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 
 export default function TrendingPage() {
   const { t, locale } = useI18n();
+  const { layout, setLayout } = useCardLayout();
   const [mounted, setMounted] = useState(false);
   const [regionCode, setRegionCode] = useState(DEFAULT_TRENDING_PREFS.regionCode);
   const [categoryId, setCategoryId] = useState(DEFAULT_TRENDING_PREFS.categoryId);
@@ -144,13 +148,25 @@ export default function TrendingPage() {
       <main className={pageMain}>
         <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0 flex-1">
-            <h1 className="text-3xl font-semibold text-stone-800">{t("trending.title")}</h1>
-            <p className="mt-2 text-stone-500">{t("trending.subtitle")}</p>
-            {fromCache && cacheRemaining && (
-              <p className="mt-2 text-xs text-stone-400">
-                {t("trending.cachedHint", { time: cacheRemaining })}
-              </p>
-            )}
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-stone-100 text-stone-600">
+                <NavIcon name="trending" className="h-5 w-5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-3">
+                  <h1 className="min-w-0 text-3xl font-semibold text-stone-800">
+                    {t("trending.title")}
+                  </h1>
+                  <LayoutToggle layout={layout} onChange={setLayout} />
+                </div>
+                <p className="mt-2 text-stone-500">{t("trending.subtitle")}</p>
+                {fromCache && cacheRemaining && (
+                  <p className="mt-2 text-xs text-stone-400">
+                    {t("trending.cachedHint", { time: cacheRemaining })}
+                  </p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="w-full shrink-0 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm lg:w-80">
@@ -208,13 +224,14 @@ export default function TrendingPage() {
               <p className="text-sm">{t("trending.loadingVideos")}</p>
             </div>
           ) : (
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className={cardsContainerClass(layout)}>
               {videos.map((video, index) => (
                 <TrendingVideoCard
                   key={video.id}
                   video={video}
                   rank={index + 1}
                   onPlay={setSelectedVideo}
+                  variant={layout}
                 />
               ))}
             </div>

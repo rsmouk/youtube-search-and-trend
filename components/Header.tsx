@@ -75,10 +75,7 @@ export default function Header() {
               <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
             </svg>
           </span>
-          <div>
-            <p className="text-sm font-semibold text-stone-800">{t("nav.appName")}</p>
-            <p className="text-xs text-stone-500">{t("nav.appTagline")}</p>
-          </div>
+          <p className="text-sm font-semibold text-stone-800">{t("nav.appName")}</p>
         </Link>
 
         <div className="flex items-center gap-2">
@@ -109,20 +106,30 @@ export default function Header() {
             })}
           </nav>
 
-          <LanguageSwitcher compact />
+          <LanguageSwitcher />
           {!loading && !user && (
             <Link
               href="/login"
-              className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
+              aria-label={t("nav.login")}
+              title={t("nav.login")}
+              className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-stone-800 text-white transition-colors hover:bg-stone-700"
             >
-              {t("nav.login")}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
+              </svg>
             </Link>
           )}
           {!loading && user && <UserMenu />}
         </div>
       </div>
 
-      <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-3 sm:hidden">
+      <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto pb-3 pe-4 ps-6 sm:hidden">
+        <span className="w-1 shrink-0" aria-hidden />
         {links.map((link) => {
           const active = pathname === link.href;
           return (

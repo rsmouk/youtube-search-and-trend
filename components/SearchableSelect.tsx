@@ -1,6 +1,7 @@
 "use client";
 
 import Select, { type StylesConfig } from "react-select";
+import { useI18n } from "@/components/I18nProvider";
 
 export interface SelectOption {
   value: string;
@@ -21,56 +22,56 @@ function getSelectStyles(
   menuMaxHeight: number
 ): StylesConfig<SelectOption, false> {
   return {
-  control: (base, state) => ({
-    ...base,
-    minHeight: 42,
-    borderRadius: "0.75rem",
-    borderColor: state.isFocused ? "#d6d3d1" : "#e7e5e4",
-    boxShadow: state.isFocused ? "0 0 0 4px #f5f5f4" : "none",
-    backgroundColor: "#fff",
-    "&:hover": { borderColor: "#d6d3d1" },
-  }),
-  menu: (base) => ({
-    ...base,
-    borderRadius: "0.75rem",
-    overflow: "hidden",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
-    zIndex: 50,
-  }),
-  menuList: (base) => ({
-    ...base,
-    padding: 4,
-    maxHeight: menuMaxHeight,
-  }),
-  option: (base, state) => ({
-    ...base,
-    borderRadius: "0.5rem",
-    fontSize: "0.875rem",
-    backgroundColor: state.isSelected
-      ? "#292524"
-      : state.isFocused
-        ? "#f5f5f4"
-        : "#fff",
-    color: state.isSelected ? "#fff" : "#44403c",
-    cursor: "pointer",
-  }),
-  placeholder: (base) => ({
-    ...base,
-    color: "#a8a29e",
-    fontSize: "0.875rem",
-  }),
-  singleValue: (base) => ({
-    ...base,
-    color: "#44403c",
-    fontSize: "0.875rem",
-  }),
-  input: (base) => ({
-    ...base,
-    color: "#44403c",
-    fontSize: "0.875rem",
-  }),
-  indicatorSeparator: () => ({ display: "none" }),
-};
+    control: (base, state) => ({
+      ...base,
+      minHeight: 42,
+      borderRadius: "0.75rem",
+      borderColor: state.isFocused ? "#d6d3d1" : "#e7e5e4",
+      boxShadow: state.isFocused ? "0 0 0 4px #f5f5f4" : "none",
+      backgroundColor: "#fff",
+      "&:hover": { borderColor: "#d6d3d1" },
+    }),
+    menu: (base) => ({
+      ...base,
+      borderRadius: "0.75rem",
+      overflow: "hidden",
+      boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+      zIndex: 50,
+    }),
+    menuList: (base) => ({
+      ...base,
+      padding: 4,
+      maxHeight: menuMaxHeight,
+    }),
+    option: (base, state) => ({
+      ...base,
+      borderRadius: "0.5rem",
+      fontSize: "0.875rem",
+      backgroundColor: state.isSelected
+        ? "#292524"
+        : state.isFocused
+          ? "#f5f5f4"
+          : "#fff",
+      color: state.isSelected ? "#fff" : "#44403c",
+      cursor: "pointer",
+    }),
+    placeholder: (base) => ({
+      ...base,
+      color: "#a8a29e",
+      fontSize: "0.875rem",
+    }),
+    singleValue: (base) => ({
+      ...base,
+      color: "#44403c",
+      fontSize: "0.875rem",
+    }),
+    input: (base) => ({
+      ...base,
+      color: "#44403c",
+      fontSize: "0.875rem",
+    }),
+    indicatorSeparator: () => ({ display: "none" }),
+  };
 }
 
 export default function SearchableSelect({
@@ -78,27 +79,30 @@ export default function SearchableSelect({
   value,
   options,
   disabled,
-  placeholder = "اختر...",
+  placeholder,
   menuMaxHeight = 220,
   onChange,
 }: SearchableSelectProps) {
+  const { dir, t } = useI18n();
+  const isRtl = dir === "rtl";
+
   const selected =
     options.find((o) => o.value === value) ??
     options.find((o) => o.value === "") ??
     null;
 
   return (
-    <label className="flex flex-col gap-1.5">
+    <label className="flex flex-col gap-1.5" dir={dir}>
       <span className="text-xs text-stone-400">{label}</span>
       <Select
         instanceId={`select-${label}`}
-        isRtl
+        isRtl={isRtl}
         isSearchable
         isDisabled={disabled}
         options={options}
         value={selected}
-        placeholder={placeholder}
-        noOptionsMessage={() => "لا توجد نتائج"}
+        placeholder={placeholder ?? t("common.all")}
+        noOptionsMessage={() => t("channels.noMatch")}
         onChange={(opt) => onChange(opt?.value ?? "")}
         styles={getSelectStyles(menuMaxHeight)}
         classNames={{

@@ -16,11 +16,11 @@ export default function VideoPlayerModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/50 p-4 sm:items-center"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-stone-900/50 sm:items-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl"
+        className="w-full max-w-3xl overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-stone-100 px-5 py-4">

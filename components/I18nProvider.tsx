@@ -35,6 +35,7 @@ export default function I18nProvider({ children }: { children: ReactNode }) {
     const { dir } = createTranslator(locale);
     document.documentElement.lang = locale;
     document.documentElement.dir = dir;
+    document.documentElement.setAttribute("data-numbering", "latn");
   }, [locale, mounted]);
 
   const setLocale = useCallback((next: Locale) => {

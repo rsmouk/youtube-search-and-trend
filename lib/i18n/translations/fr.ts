@@ -121,7 +121,7 @@ export const fr: TranslationDict = {
     country: "Pays",
     description: "Description",
     visitYoutube: "Visiter la chaîne sur YouTube",
-    latestVideos: "Dernières vidéos",
+    latestVideos: "Dernières vidéos de {name}",
     addedDate: "Date de création",
     countryLabel: "Pays",
     hidden: "Masqué",

@@ -5,13 +5,12 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import RssVideoCard from "@/components/RssVideoCard";
-import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { getCachedChannel } from "@/lib/channel-cache";
 import { getSiteChannelById, siteRowToChannel } from "@/lib/channels-db";
 import { channelToSaved } from "@/lib/channel-utils";
-import { formatCount, formatDate, getChannelUrl } from "@/lib/format";
+import { formatCount, formatDate, formatPlainCount, getChannelUrl } from "@/lib/format";
 import { getCountryLabel } from "@/lib/filters";
 import { shareChannelPage } from "@/lib/share";
 import type { RssVideo } from "@/lib/youtube-rss";
@@ -21,7 +20,7 @@ import {
   removeChannelForUser,
   saveChannelForUser,
 } from "@/lib/saved-service";
-import type { Channel, TrendingVideo } from "@/lib/types";
+import type { Channel } from "@/lib/types";
 
 export default function ChannelPage() {
   const params = useParams();
@@ -35,7 +34,6 @@ export default function ChannelPage() {
   const [notFound, setNotFound] = useState(false);
   const [saved, setSaved] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
-  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -102,19 +100,6 @@ export default function ChannelPage() {
     }
   };
 
-  const playRssVideo = (video: RssVideo) => {
-    setSelectedVideo({
-      id: video.id,
-      title: video.title,
-      description: "",
-      channelId,
-      channelTitle: channel?.snippet.title ?? "",
-      publishedAt: video.publishedAt,
-      thumbnail: video.thumbnail,
-      viewCount: "0",
-    });
-  };
-
   if (loading) {
     return (
       <>
@@ -147,11 +132,11 @@ export default function ChannelPage() {
       <Header />
       <main className={pageMainChannel}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
-          <div className="flex items-start gap-4">
+          <div className="flex items-center gap-4">
             <img
               src={thumbnail}
               alt={channel.snippet.title}
-              className="h-20 w-20 rounded-full border border-stone-100 object-cover"
+              className="h-20 w-20 shrink-0 rounded-full border border-stone-100 object-cover"
             />
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-semibold text-stone-800">{channel.snippet.title}</h1>
@@ -161,55 +146,56 @@ export default function ChannelPage() {
                 </p>
               )}
             </div>
-            <div className="relative flex shrink-0 gap-2">
-              {shareMsg && (
-                <span className="absolute -top-8 left-0 rounded-lg bg-stone-800 px-2 py-1 text-[10px] whitespace-nowrap text-white">
-                  {shareMsg}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={handleShare}
-                title={t("common.share")}
-                aria-label={t("common.share")}
-                className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+          </div>
+
+          <div className="relative mt-4 flex gap-2">
+            {shareMsg && (
+              <span className="absolute -top-8 start-0 rounded-lg bg-stone-800 px-2 py-1 text-[10px] whitespace-nowrap text-white">
+                {shareMsg}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={handleShare}
+              title={t("common.share")}
+              aria-label={t("common.share")}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-4 w-4"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="h-4 w-4"
-                >
-                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                  <polyline points="16 6 12 2 8 6" />
-                  <line x1="12" x2="12" y1="2" y2="15" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={toggleSave}
-                title={saved ? t("common.saved") : t("common.save")}
-                aria-label={t("common.save")}
-                className={`flex h-10 w-10 items-center justify-center rounded-xl ${
-                  saved
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
-                }`}
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" x2="12" y1="2" y2="15" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={toggleSave}
+              title={saved ? t("common.saved") : t("common.save")}
+              aria-label={t("common.save")}
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                saved
+                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill={saved ? "currentColor" : "none"}
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-4 w-4"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill={saved ? "currentColor" : "none"}
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="h-4 w-4"
-                >
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-              </button>
-            </div>
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
+            </button>
           </div>
 
           <div className="mt-6 grid grid-cols-3 gap-3">
@@ -227,7 +213,7 @@ export default function ChannelPage() {
             />
             <StatBox
               label={t("channel.videoCount")}
-              value={formatCount(channel.statistics.videoCount)}
+              value={formatPlainCount(channel.statistics.videoCount)}
             />
           </div>
 
@@ -266,10 +252,9 @@ export default function ChannelPage() {
         </div>
 
         <section className="mt-8">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-stone-700">{t("channel.latestVideos")}</h2>
-            <span className="text-xs text-stone-400">{t("channel.rssHint")}</span>
-          </div>
+          <h2 className="mb-4 text-lg font-medium text-stone-700">
+            {t("channel.latestVideos", { name: channel.snippet.title })}
+          </h2>
 
           {videosLoading ? (
             <div className="space-y-3">
@@ -284,14 +269,12 @@ export default function ChannelPage() {
           ) : (
             <div className="space-y-3">
               {videos.map((video) => (
-                <RssVideoCard key={video.id} video={video} onPlay={playRssVideo} />
+                <RssVideoCard key={video.id} video={video} />
               ))}
             </div>
           )}
         </section>
       </main>
-
-      <VideoPlayerModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
     </>
   );
 }

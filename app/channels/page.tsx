@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
+import PageHeader from "@/components/PageHeader";
 import ChannelCard from "@/components/ChannelCard";
+import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import SearchableSelect from "@/components/SearchableSelect";
 import { useI18n } from "@/components/I18nProvider";
 import {
@@ -12,9 +14,11 @@ import {
 } from "@/lib/channels-db";
 import { getCountryOptions } from "@/lib/filters";
 import { pageMain } from "@/lib/layout-classes";
+import { useCardLayout } from "@/lib/use-card-layout";
 
 export default function ChannelsPage() {
   const { t, locale } = useI18n();
+  const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -45,10 +49,12 @@ export default function ChannelsPage() {
     <>
       <Header />
       <main className={pageMain}>
-        <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">{t("channels.title")}</h1>
-          <p className="mt-2 text-stone-500">{t("channels.subtitle")}</p>
-        </section>
+        <PageHeader
+          icon="channels"
+          title={t("channels.title")}
+          subtitle={t("channels.subtitle")}
+          actions={<LayoutToggle layout={layout} onChange={setLayout} />}
+        />
 
         <div className="mb-8 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm">
           <div className="grid gap-3 sm:grid-cols-3">
@@ -101,9 +107,13 @@ export default function ChannelsPage() {
             {t("channels.noMatch")}
           </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <div className={cardsContainerClass(layout)}>
             {channels.map((row) => (
-              <ChannelCard key={row.channel_id} channel={siteRowToChannel(row)} />
+              <ChannelCard
+                key={row.channel_id}
+                channel={siteRowToChannel(row)}
+                variant={layout}
+              />
             ))}
           </div>
         )}

@@ -7,10 +7,12 @@ import Header from "@/components/Header";
 import SearchForm from "@/components/SearchForm";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelCardSkeleton from "@/components/ChannelCardSkeleton";
+import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import SuggestedChannels from "@/components/SuggestedChannels";
 import { useI18n } from "@/components/I18nProvider";
 import { upsertChannelsFromSearch } from "@/lib/channels-db";
 import { addRecentSearch } from "@/lib/storage";
+import { useCardLayout } from "@/lib/use-card-layout";
 import { translateYouTubeError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
@@ -19,6 +21,7 @@ const SKELETON_COUNT = 6;
 
 export default function HomePage() {
   const { t } = useI18n();
+  const { layout, setLayout } = useCardLayout();
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -118,24 +121,27 @@ export default function HomePage() {
 
         {showResults && (
           <section className="mt-12">
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-medium text-stone-700">
-                {t("home.resultsFor", { keyword: searchedKeyword })}
-              </h2>
-              {!loading && channels.length > 0 && (
-                <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                  {t("common.channels", { count: channels.length })}
-                </span>
-              )}
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <div className="flex min-w-0 items-center gap-3">
+                <h2 className="truncate text-lg font-medium text-stone-700">
+                  {t("home.resultsFor", { keyword: searchedKeyword })}
+                </h2>
+                {!loading && channels.length > 0 && (
+                  <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                    {t("common.channels", { count: channels.length })}
+                  </span>
+                )}
+              </div>
+              <LayoutToggle layout={layout} onChange={setLayout} />
             </div>
 
-            <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className={cardsContainerClass(layout, true)}>
               {loading
                 ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                     <ChannelCardSkeleton key={i} />
                   ))
                 : channels.map((channel) => (
-                    <ChannelCard key={channel.id} channel={channel} />
+                    <ChannelCard key={channel.id} channel={channel} variant={layout} />
                   ))}
             </div>
           </section>

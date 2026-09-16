@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { pageMainLg } from "@/lib/layout-classes";
@@ -122,10 +123,11 @@ export default function SettingsPage() {
     <>
       <Header />
       <main className={pageMainLg}>
-        <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">{t("settings.title")}</h1>
-          <p className="mt-2 text-stone-500">{t("settings.subtitle")}</p>
-        </section>
+        <PageHeader
+          icon="settings"
+          title={t("settings.title")}
+          subtitle={t("settings.subtitle")}
+        />
 
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

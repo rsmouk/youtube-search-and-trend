@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
+import PageHeader from "@/components/PageHeader";
+import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import {
@@ -12,11 +14,13 @@ import {
 } from "@/lib/channels-db";
 import { formatCount } from "@/lib/format";
 import { pageMain } from "@/lib/layout-classes";
+import { useCardLayout } from "@/lib/use-card-layout";
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
   const { t } = useI18n();
+  const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "featured">("all");
@@ -83,10 +87,12 @@ export default function AdminPage() {
     <>
       <Header />
       <main className={pageMain}>
-        <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">{t("admin.title")}</h1>
-          <p className="mt-2 text-stone-500">{t("admin.subtitle")}</p>
-        </section>
+        <PageHeader
+          icon="admin"
+          title={t("admin.title")}
+          subtitle={t("admin.subtitle")}
+          actions={<LayoutToggle layout={layout} onChange={setLayout} />}
+        />
 
         {actionError && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -114,11 +120,15 @@ export default function AdminPage() {
         {loading ? (
           <div className="h-40 animate-pulse rounded-2xl bg-stone-100" />
         ) : (
-          <div className="space-y-3">
+          <div className={cardsContainerClass(layout)}>
             {channels.map((ch) => (
               <div
                 key={ch.channel_id}
-                className="flex items-center gap-4 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm"
+                className={`flex gap-4 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm ${
+                  layout === "grid"
+                    ? "flex-col items-start"
+                    : "flex-row items-center"
+                }`}
               >
                 {ch.thumbnail_url && (
                   <img
@@ -140,6 +150,8 @@ export default function AdminPage() {
                   disabled={togglingId === ch.channel_id}
                   onClick={() => toggleFeatured(ch.channel_id, ch.featured)}
                   className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-60 ${
+                    layout === "grid" ? "w-full" : ""
+                  } ${
                     ch.featured
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"

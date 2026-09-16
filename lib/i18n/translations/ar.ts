@@ -119,7 +119,7 @@ export const ar: TranslationDict = {
     country: "الدولة",
     description: "الوصف",
     visitYoutube: "زيارة القناة على YouTube",
-    latestVideos: "آخر الفيديوهات",
+    latestVideos: "آخر الفيديوهات لقناة {name}",
     addedDate: "تاريخ الإضافة",
     countryLabel: "البلد",
     hidden: "مخفيون",

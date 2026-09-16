@@ -5,7 +5,14 @@
 }
 
 html[dir="rtl"] {
-  --font-sans: var(--font-noto-arabic), ui-sans-serif, system-ui, sans-serif;
+  /* Inter first so digits stay 0-9; Arabic letters fall back to Noto */
+  --font-sans: var(--font-inter), var(--font-noto-arabic), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Always prefer Western digits (123), never Eastern Arabic (١٢٣) */
+html {
+  font-feature-settings: "locl" 0;
+  font-variant-numeric: lining-nums;
 }
 
 * {

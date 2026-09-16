@@ -117,7 +117,7 @@ export const en = {
     country: "Country",
     description: "Description",
     visitYoutube: "Visit channel on YouTube",
-    latestVideos: "Latest videos",
+    latestVideos: "Latest videos for {name}",
     addedDate: "Created",
     countryLabel: "Country",
     hidden: "Hidden",

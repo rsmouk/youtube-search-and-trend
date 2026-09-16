@@ -2,6 +2,7 @@ import AuthProvider from "@/components/AuthProvider";
 import I18nProvider from "@/components/I18nProvider";
 import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 import PwaRegister from "@/components/PwaRegister";
+import ScrollToTop from "@/components/ScrollToTop";
 import { Inter, Noto_Sans_Arabic } from "next/font/google";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
@@ -37,6 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-screen bg-[#f7f6f3] font-sans text-stone-800 antialiased">
         <I18nProvider>
           <AuthProvider>
+            <ScrollToTop />
             <div className="flex min-h-screen flex-col">{children}</div>
             <PwaInstallPrompt />
             <PwaRegister />
