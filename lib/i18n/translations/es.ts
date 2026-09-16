@@ -61,6 +61,7 @@ export const es: TranslationDict = {
     showFilters: "Mostrar filtros",
     hideFilters: "Ocultar filtros",
     suggested: "Canales con más likes",
+    cachedHint: "Desde caché — sin consumir cuota API",
     gridView: "Vista cuadrícula",
     rowView: "Vista lista",
   },

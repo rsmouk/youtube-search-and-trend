@@ -28,7 +28,7 @@ import {
 } from "@/lib/trending-cache";
 import { useCardLayout } from "@/lib/use-card-layout";
 import { useLocalePath } from "@/lib/use-locale-path";
-import { translateYouTubeError } from "@/lib/youtube";
+import { translateYouTubeError } from "@/lib/youtube-errors";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 import PageTitle from "@/components/PageTitle";

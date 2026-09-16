@@ -1,9 +1,5 @@
 import type { Channel, SavedChannel } from "./types";
-import { createAdminClient } from "./supabase/admin";
 import { createClient, isSupabaseConfigured } from "./supabase/client";
-
-/** Prefer DB rows newer than this instead of calling channels.list */
-const CHANNEL_DB_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export interface SiteChannelRow {
   id: string;
@@ -72,39 +68,6 @@ export function siteRowToChannel(row: SiteChannelRow): Channel {
       hiddenSubscriberCount: row.hidden_subscriber_count ?? false,
     },
   };
-}
-
-function isReusableSiteRow(row: SiteChannelRow): boolean {
-  if (!row.title?.trim()) return false;
-  if (row.subscriber_count == null || row.subscriber_count === "") return false;
-  const seen = new Date(row.last_seen_at).getTime();
-  if (!Number.isFinite(seen)) return false;
-  return Date.now() - seen < CHANNEL_DB_MAX_AGE_MS;
-}
-
-/** Server-side lookup for search enrichment (skips channels.list when possible). */
-export async function getSiteChannelsByIds(
-  channelIds: string[]
-): Promise<Map<string, Channel>> {
-  const map = new Map<string, Channel>();
-  const unique = [...new Set(channelIds.filter(Boolean))];
-  if (unique.length === 0) return map;
-
-  const admin = createAdminClient();
-  if (!admin) return map;
-
-  const { data, error } = await admin
-    .from("site_channels")
-    .select("*")
-    .in("channel_id", unique);
-
-  if (error || !data) return map;
-
-  for (const row of data as SiteChannelRow[]) {
-    if (!isReusableSiteRow(row)) continue;
-    map.set(row.channel_id, siteRowToChannel(row));
-  }
-  return map;
 }
 
 export function siteRowToSaved(row: SiteChannelRow): SavedChannel {

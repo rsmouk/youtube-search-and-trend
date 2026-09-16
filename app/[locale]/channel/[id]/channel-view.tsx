@@ -7,7 +7,7 @@ import RssVideoCard from "@/components/RssVideoCard";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { getCachedChannel } from "@/lib/channel-cache";
-import { getSiteChannelById, siteRowToChannel } from "@/lib/channels-db";
+import { siteRowToChannel, type SiteChannelRow } from "@/lib/channels-db";
 import { formatCompactCount, formatCount, formatDate, formatPlainCount, getChannelUrl } from "@/lib/format";
 import { getCountryLabel } from "@/lib/filters";
 import { shareChannelPage } from "@/lib/share";
@@ -24,59 +24,115 @@ import type { Channel } from "@/lib/types";
 import LoginPromptModal from "@/components/LoginPromptModal";
 import PageTitle from "@/components/PageTitle";
 
-export default function ChannelView({ channelId }: { channelId: string }) {
+function channelFromRow(
+  channelId: string,
+  initialRow: SiteChannelRow | null
+): Channel | null {
+  if (!initialRow) return null;
+  return {
+    ...siteRowToChannel(initialRow),
+    likeCount: initialRow.like_count ?? 0,
+  };
+}
+
+export default function ChannelView({
+  channelId,
+  initialRow = null,
+}: {
+  channelId: string;
+  initialRow?: SiteChannelRow | null;
+}) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
   const lp = useLocalePath();
-  const [channel, setChannel] = useState<Channel | null>(null);
+  const [channel, setChannel] = useState<Channel | null>(() =>
+    channelFromRow(channelId, initialRow)
+  );
   const [videos, setVideos] = useState<RssVideo[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => !initialRow);
   const [videosLoading, setVideosLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
   const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
+  const [likeCount, setLikeCount] = useState(initialRow?.like_count ?? 0);
   const [likeBusy, setLikeBusy] = useState(false);
   const [loginPrompt, setLoginPrompt] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
 
   useEffect(() => {
-    Promise.all([
-      getSiteChannelById(channelId),
-      fetch(`/api/channel/${channelId}/videos`).then((r) => r.json()),
-      fetchLikeCount(channelId),
-    ]).then(([row, rssData, count]) => {
-      const cached = getCachedChannel(channelId);
-      if (cached) {
-        setChannel(cached);
-      } else if (row) {
-        setChannel({ ...siteRowToChannel(row), likeCount: row.like_count ?? count });
-      } else if (rssData.channelName) {
-        setChannel({
-          id: channelId,
-          snippet: {
-            title: rssData.channelName,
-            description: "",
-            publishedAt: new Date().toISOString(),
-            thumbnails: {},
-          },
-          statistics: {
-            viewCount: "0",
-            subscriberCount: "0",
-            videoCount: "0",
-          },
-        });
-      } else {
-        setNotFound(true);
-      }
-      setLikeCount(row?.like_count ?? count);
-      setVideos(rssData.videos ?? []);
+    let cancelled = false;
+
+    const fromRow = channelFromRow(channelId, initialRow);
+    const cached = getCachedChannel(channelId);
+    const seed = cached ?? fromRow;
+
+    if (seed) {
+      setChannel(seed);
       setLoading(false);
-      setVideosLoading(false);
-    });
-  }, [channelId]);
+      setNotFound(false);
+      if (initialRow?.like_count != null) {
+        setLikeCount(initialRow.like_count);
+      }
+    }
+
+    async function load() {
+      try {
+        const [rssRes, count] = await Promise.all([
+          fetch(`/api/channel/${channelId}/videos`)
+            .then(async (r) => {
+              if (!r.ok) return { videos: [] as RssVideo[], channelName: undefined };
+              return r.json() as Promise<{
+                videos?: RssVideo[];
+                channelName?: string;
+              }>;
+            })
+            .catch(() => ({ videos: [] as RssVideo[], channelName: undefined })),
+          fetchLikeCount(channelId).catch(() => 0),
+        ]);
+
+        if (cancelled) return;
+
+        setVideos(rssRes.videos ?? []);
+        setLikeCount((prev) => (prev > 0 ? prev : count));
+
+        if (!seed) {
+          if (rssRes.channelName) {
+            setChannel({
+              id: channelId,
+              snippet: {
+                title: rssRes.channelName,
+                description: "",
+                publishedAt: new Date().toISOString(),
+                thumbnails: {},
+              },
+              statistics: {
+                viewCount: "0",
+                subscriberCount: "0",
+                videoCount: "0",
+              },
+            });
+            setNotFound(false);
+          } else {
+            setNotFound(true);
+          }
+        }
+      } catch {
+        if (!cancelled && !seed) setNotFound(true);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+          setVideosLoading(false);
+        }
+      }
+    }
+
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [channelId, initialRow]);
 
   useEffect(() => {
-    checkChannelLiked(channelId, user?.id).then(setLiked);
+    checkChannelLiked(channelId, user?.id).then(setLiked).catch(() => setLiked(false));
   }, [channelId, user?.id]);
 
   const title = channel
@@ -153,11 +209,17 @@ export default function ChannelView({ channelId }: { channelId: string }) {
       <main className={pageMainChannel}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-center gap-4">
-            <img
-              src={thumbnail}
-              alt={channel.snippet.title}
-              className="h-20 w-20 shrink-0 rounded-full border border-stone-100 object-cover"
-            />
+            {thumbnail ? (
+              <img
+                src={thumbnail}
+                alt={channel.snippet.title}
+                className="h-20 w-20 shrink-0 rounded-full border border-stone-100 object-cover"
+              />
+            ) : (
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full border border-stone-100 bg-stone-100 text-2xl font-semibold text-stone-400">
+                {channel.snippet.title.slice(0, 1)}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <h1 className="text-2xl font-semibold text-stone-800">{channel.snippet.title}</h1>
               {channel.snippet.customUrl && (

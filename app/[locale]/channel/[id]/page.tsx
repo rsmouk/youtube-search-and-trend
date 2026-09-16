@@ -37,5 +37,6 @@ export default async function ChannelPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  return <ChannelView channelId={id} />;
+  const initialRow = await getSiteChannelByIdServer(id);
+  return <ChannelView channelId={id} initialRow={initialRow} />;
 }

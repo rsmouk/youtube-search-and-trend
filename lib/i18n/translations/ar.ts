@@ -59,6 +59,7 @@ export const ar: TranslationDict = {
     showFilters: "إظهار الفلاتر",
     hideFilters: "إخفاء الفلاتر",
     suggested: "أكثر القنوات إعجاباً",
+    cachedHint: "من الكاش — بدون استهلاك كوطا API",
     gridView: "عرض شبكي",
     rowView: "عرض سطري",
   },

@@ -57,6 +57,7 @@ export const en = {
     showFilters: "Show filters",
     hideFilters: "Hide filters",
     suggested: "Most liked channels",
+    cachedHint: "From cache — no API quota used",
     gridView: "Grid view",
     rowView: "List view",
   },

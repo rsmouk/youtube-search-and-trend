@@ -1,6 +1,6 @@
 import type { SearchFilters } from "./filters";
 import { DEFAULT_FILTERS } from "./filters";
-import { getSiteChannelsByIds } from "./channels-db";
+import { getSiteChannelsByIds } from "./channels-db-server";
 import type { Channel, TrendingVideo, VideoCategory } from "./types";
 import { QUOTA_COSTS, recordApiQuotaUsage } from "./youtube-quota";
 
