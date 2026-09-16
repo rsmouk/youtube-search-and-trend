@@ -21,7 +21,7 @@ const I18nContext = createContext<
   Translator & { setLocale: (locale: Locale) => void }
  | null>(null);
 
-export function I18nProvider({ children }: { children: ReactNode }) {
+export default function I18nProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>("en");
   const [mounted, setMounted] = useState(false);
 
