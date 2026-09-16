@@ -7,7 +7,6 @@ import CategoryButtons from "@/components/CategoryButtons";
 import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import SearchableSelect from "@/components/SearchableSelect";
 import TrendingVideoCard from "@/components/TrendingVideoCard";
-import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { useI18n } from "@/components/I18nProvider";
 import NavIcon from "@/components/NavIcon";
 import {
@@ -47,7 +46,6 @@ export default function TrendingView() {
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingVideos, setLoadingVideos] = useState(false);
   const [error, setError] = useState("");
-  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [cacheRemaining, setCacheRemaining] = useState("");
 
@@ -275,7 +273,6 @@ export default function TrendingView() {
                   key={video.id}
                   video={video}
                   rank={index + 1}
-                  onPlay={setSelectedVideo}
                   variant={layout}
                 />
               ))}
@@ -283,8 +280,6 @@ export default function TrendingView() {
           )}
         </section>
       </main>
-
-      <VideoPlayerModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
     </>
   );
 }

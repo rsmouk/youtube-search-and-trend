@@ -1,31 +1,31 @@
 "use client";
 
 import type { TrendingVideo } from "@/lib/types";
-import { formatCount, formatDate } from "@/lib/format";
+import { formatCount, formatDate, getVideoUrl } from "@/lib/format";
 import { useI18n } from "@/components/I18nProvider";
 import type { SuggestedLayout } from "@/lib/storage";
 
 interface TrendingVideoCardProps {
   video: TrendingVideo;
   rank: number;
-  onPlay: (video: TrendingVideo) => void;
   variant?: SuggestedLayout;
 }
 
 export default function TrendingVideoCard({
   video,
   rank,
-  onPlay,
   variant = "grid",
 }: TrendingVideoCardProps) {
   const { t } = useI18n();
+  const watchUrl = getVideoUrl(video.id);
 
   if (variant === "row") {
     return (
       <article className="flex flex-col gap-3 overflow-hidden rounded-2xl border border-stone-200/80 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center">
-        <button
-          type="button"
-          onClick={() => onPlay(video)}
+        <a
+          href={watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-stone-100 sm:aspect-auto sm:h-24 sm:w-40"
         >
           <img
@@ -36,15 +36,16 @@ export default function TrendingVideoCard({
           <span className="absolute end-2 top-2 rounded-lg bg-stone-900/80 px-2 py-0.5 text-[10px] font-bold text-white">
             #{rank}
           </span>
-        </button>
+        </a>
         <div className="min-w-0 flex-1">
-          <button
-            type="button"
-            onClick={() => onPlay(video)}
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="line-clamp-2 text-start text-sm font-semibold text-stone-800 hover:text-stone-600"
           >
             {video.title}
-          </button>
+          </a>
           <p className="mt-1 text-xs text-stone-500">{video.channelTitle}</p>
           <div className="mt-1 flex flex-wrap gap-2 text-xs text-stone-400">
             <span>{t("channel.views", { count: formatCount(video.viewCount) })}</span>
@@ -53,13 +54,14 @@ export default function TrendingVideoCard({
           </div>
         </div>
         <div className="flex shrink-0 gap-2">
-          <button
-            type="button"
-            onClick={() => onPlay(video)}
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
           >
             {t("common.open")}
-          </button>
+          </a>
           <a
             href={`https://www.youtube.com/channel/${video.channelId}`}
             target="_blank"
@@ -75,9 +77,10 @@ export default function TrendingVideoCard({
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <button
-        type="button"
-        onClick={() => onPlay(video)}
+      <a
+        href={watchUrl}
+        target="_blank"
+        rel="noopener noreferrer"
         className="relative aspect-video overflow-hidden bg-stone-100 text-start"
       >
         <img
@@ -100,16 +103,17 @@ export default function TrendingVideoCard({
             </svg>
           </span>
         </span>
-      </button>
+      </a>
 
       <div className="flex flex-1 flex-col p-4">
-        <button
-          type="button"
-          onClick={() => onPlay(video)}
+        <a
+          href={watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
           className="line-clamp-2 text-start text-sm font-semibold leading-relaxed text-stone-800 transition-colors hover:text-stone-600"
         >
           {video.title}
-        </button>
+        </a>
         <p className="mt-2 text-xs text-stone-500">{video.channelTitle}</p>
         <div className="mt-2 flex flex-wrap gap-2 text-xs text-stone-400">
           <span>{t("channel.views", { count: formatCount(video.viewCount) })}</span>
@@ -118,13 +122,14 @@ export default function TrendingVideoCard({
         </div>
 
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => onPlay(video)}
+          <a
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="rounded-xl bg-stone-800 px-3 py-2 text-center text-xs font-medium text-white transition-colors hover:bg-stone-700"
           >
             {t("common.open")}
-          </button>
+          </a>
           <a
             href={`https://www.youtube.com/channel/${video.channelId}`}
             target="_blank"
