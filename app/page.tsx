@@ -121,19 +121,15 @@ export default function HomePage() {
               )}
             </div>
 
-            {loading ? (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
-                  <ChannelCardSkeleton key={i} />
-                ))}
-              </div>
-            ) : (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {channels.map((channel) => (
-                  <ChannelCard key={channel.id} channel={channel} />
-                ))}
-              </div>
-            )}
+            <div className="grid auto-rows-fr gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {loading
+                ? Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                    <ChannelCardSkeleton key={i} />
+                  ))
+                : channels.map((channel) => (
+                    <ChannelCard key={channel.id} channel={channel} />
+                  ))}
+            </div>
           </section>
         )}
       </main>

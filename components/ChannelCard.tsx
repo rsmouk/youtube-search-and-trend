@@ -71,8 +71,8 @@ export default function ChannelCard({
   };
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
-      <div className="flex items-start gap-4 p-4">
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+      <div className="flex flex-1 items-start gap-4 p-4">
         <Link href={`/channel/${channel.id}`} onClick={() => cacheChannel(channel)}>
           <img
             src={thumbnail}
@@ -93,11 +93,15 @@ export default function ChannelCard({
               ? "المشتركون مخفيون"
               : `${formatCount(channel.statistics.subscriberCount)} مشترك`}
           </p>
-          {channel.recentVideoTitle && (
-            <p className="mt-2 line-clamp-2 text-xs leading-relaxed text-stone-400">
-              آخر فيديو: {channel.recentVideoTitle}
-            </p>
-          )}
+          <p
+            className={`mt-2 line-clamp-2 min-h-[2.5rem] text-xs leading-relaxed text-stone-400 ${
+              channel.recentVideoTitle ? "" : "invisible"
+            }`}
+          >
+            {channel.recentVideoTitle
+              ? `آخر فيديو: ${channel.recentVideoTitle}`
+              : "placeholder"}
+          </p>
         </div>
       </div>
 
