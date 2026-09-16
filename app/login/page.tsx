@@ -8,6 +8,7 @@ import {
   createClient,
   isSupabaseConfigured,
 } from "@/lib/supabase/client";
+import { pageMainMd } from "@/lib/layout-classes";
 
 function translateAuthError(message: string): string {
   const lower = message.toLowerCase();
@@ -159,7 +160,7 @@ function LoginForm() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-md flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMainMd}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-stone-800">
             {mode === "login" ? "تسجيل الدخول" : "إنشاء حساب"}
@@ -287,7 +288,7 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <main className="mx-auto max-w-md px-4 py-10">
+        <main className={pageMainMd}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       }

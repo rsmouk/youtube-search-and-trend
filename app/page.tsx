@@ -12,6 +12,7 @@ import { upsertChannelsFromSearch } from "@/lib/channels-db";
 import { addRecentSearch, getApiKeys } from "@/lib/storage";
 import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
+import { pageMain } from "@/lib/layout-classes";
 
 const SKELETON_COUNT = 6;
 
@@ -80,7 +81,7 @@ export default function HomePage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMain}>
         <section className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-stone-800 sm:text-4xl">
             اكتشف قنوات يوتيوب

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import { getApiKeys, saveApiKeys } from "@/lib/storage";
+import { pageMainLg } from "@/lib/layout-classes";
 
 export default function SettingsPage() {
   const [keys, setKeys] = useState<string[]>([""]);
@@ -48,7 +49,7 @@ export default function SettingsPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-2xl flex-1 px-4 py-10 sm:px-6">
+        <main className={pageMainLg}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       </>
@@ -58,7 +59,7 @@ export default function SettingsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-2xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMainLg}>
         <section className="mb-8">
           <h1 className="text-3xl font-semibold text-stone-800">الإعدادات</h1>
           <p className="mt-2 text-stone-500">

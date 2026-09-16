@@ -10,6 +10,7 @@ import {
   type SiteChannelRow,
 } from "@/lib/channels-db";
 import { COUNTRY_OPTIONS } from "@/lib/filters";
+import { pageMain } from "@/lib/layout-classes";
 
 const countryFilterOptions = [
   { value: "", label: "كل الدول" },
@@ -45,7 +46,7 @@ export default function ChannelsPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMain}>
         <section className="mb-8">
           <h1 className="text-3xl font-semibold text-stone-800">
             دليل القنوات

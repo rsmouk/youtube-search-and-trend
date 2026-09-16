@@ -11,8 +11,10 @@ const notoSansArabic = Noto_Sans_Arabic({
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="ar" dir="rtl" className={`${notoSansArabic.variable} h-full`}>
-      <body className="min-h-full flex flex-col bg-[#f7f6f3] font-sans text-stone-800 antialiased">
-        <AuthProvider>{children}</AuthProvider>
+      <body className="min-h-screen bg-[#f7f6f3] font-sans text-stone-800 antialiased">
+        <AuthProvider>
+          <div className="flex min-h-screen flex-col">{children}</div>
+        </AuthProvider>
       </body>
     </html>
   );

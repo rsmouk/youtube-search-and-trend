@@ -22,6 +22,7 @@ import {
 } from "@/lib/trending-cache";
 import { YouTubeApiError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
+import { pageMain } from "@/lib/layout-classes";
 
 export default function TrendingPage() {
   const [mounted, setMounted] = useState(false);
@@ -126,7 +127,7 @@ export default function TrendingPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-6xl flex-1 px-4 py-10 sm:px-6">
+        <main className={pageMain}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       </>
@@ -136,7 +137,7 @@ export default function TrendingPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMain}>
         <section className="mb-8">
           <h1 className="text-3xl font-semibold text-stone-800">الترند</h1>
           <p className="mt-2 text-stone-500">

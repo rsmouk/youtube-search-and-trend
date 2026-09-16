@@ -14,6 +14,7 @@ import { formatCount, formatDate, getChannelUrl } from "@/lib/format";
 import { getCountryLabel } from "@/lib/filters";
 import { shareChannelPage } from "@/lib/share";
 import type { RssVideo } from "@/lib/youtube-rss";
+import { pageMainChannel } from "@/lib/layout-classes";
 import {
   checkChannelSaved,
   removeChannelForUser,
@@ -121,7 +122,7 @@ export default function ChannelPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-3xl flex-1 px-4 py-10">
+        <main className={pageMainChannel}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       </>
@@ -132,7 +133,7 @@ export default function ChannelPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-3xl flex-1 px-4 py-10 text-center">
+        <main className={`${pageMainChannel} text-center`}>
           <p className="text-stone-500">القناة غير موجودة</p>
           <Link href="/" className="mt-4 inline-block text-sm underline">
             العودة للبحث
@@ -147,7 +148,7 @@ export default function ChannelPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-3xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMainChannel}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <div className="flex items-start gap-4">
             <img

@@ -10,6 +10,7 @@ import {
   type SiteChannelRow,
 } from "@/lib/channels-db";
 import { formatCount } from "@/lib/format";
+import { pageMain } from "@/lib/layout-classes";
 
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
@@ -46,7 +47,7 @@ export default function AdminPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-6xl flex-1 px-4 py-10">
+        <main className={pageMain}>
           <div className="h-40 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       </>
@@ -56,7 +57,7 @@ export default function AdminPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-6xl flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMain}>
         <section className="mb-8">
           <h1 className="text-3xl font-semibold text-stone-800">
             لوحة الإدارة

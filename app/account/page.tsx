@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
+import { pageMainMd } from "@/lib/layout-classes";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -63,7 +64,7 @@ export default function AccountPage() {
     return (
       <>
         <Header />
-        <main className="mx-auto max-w-md flex-1 px-4 py-10">
+        <main className={pageMainMd}>
           <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
         </main>
       </>
@@ -73,7 +74,7 @@ export default function AccountPage() {
   return (
     <>
       <Header />
-      <main className="mx-auto max-w-md flex-1 px-4 py-10 sm:px-6">
+      <main className={pageMainMd}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <div className="mb-6 flex items-center gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-emerald-200 bg-emerald-50 text-emerald-700">
