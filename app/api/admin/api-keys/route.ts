@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
 import {
   getAdminApiKeysForDisplay,
+  getEnvApiKeySuffixes,
   setServerApiKeys,
 } from "@/lib/api-keys-server";
 
@@ -12,7 +13,8 @@ export async function GET() {
   }
 
   const keys = await getAdminApiKeysForDisplay();
-  return NextResponse.json({ keys });
+  const envKeySuffixes = getEnvApiKeySuffixes();
+  return NextResponse.json({ keys, envKeySuffixes });
 }
 
 export async function POST(request: NextRequest) {

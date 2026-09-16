@@ -16,6 +16,7 @@ export default function SettingsView() {
   const lp = useLocalePath();
   const { t, dict } = useI18n();
   const [keys, setKeys] = useState<string[]>([""]);
+  const [envKeySuffixes, setEnvKeySuffixes] = useState<string[]>([]);
   const [saved, setSaved] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,9 @@ export default function SettingsView() {
           const data = await res.json();
           const stored: string[] = data.keys ?? [];
           setKeys(stored.length > 0 ? stored : [""]);
+          setEnvKeySuffixes(
+            Array.isArray(data.envKeySuffixes) ? data.envKeySuffixes : []
+          );
         }
       } catch {
         setError(t("settings.loadError"));
@@ -142,6 +146,18 @@ export default function SettingsView() {
         )}
 
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
+          {envKeySuffixes.length > 0 && (
+            <div className="mb-5 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">
+              <p className="font-medium">{t("settings.envKeysTitle")}</p>
+              <p className="mt-1 text-xs leading-relaxed text-emerald-800/80">
+                {t("settings.envKeysHint", { count: envKeySuffixes.length })}
+              </p>
+              <p className="mt-2 font-mono text-xs text-emerald-800">
+                {envKeySuffixes.map((s) => `…${s}`).join(" · ")}
+              </p>
+            </div>
+          )}
+
           <div className="space-y-4">
             {keys.map((key, index) => (
               <div key={index} className="flex gap-2">

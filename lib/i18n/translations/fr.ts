@@ -220,12 +220,18 @@ export const fr: TranslationDict = {
     quotaPercent: "{pct}% utilisé",
     quotaLimit: "{limit} unités/clé/jour",
     quotaPerKey: "Par clé",
-    quotaNoKeys: "Aucune clé API configurée",
+    quotaNoKeys: "Aucune clé API configurée (Paramètres ou YOUTUBE_API_KEYS)",
     quotaKeyLine: "{used} utilisés · {remaining} restants sur {limit} · {requests} appels",
     quotaStatus: {
       ok: "OK",
       low: "Bas",
       exhausted: "Épuisé",
+    },
+    quotaSource: {
+      settings: "Paramètres",
+      env: "Env",
+      both: "Paramètres + Env",
+      unknown: "Autre",
     },
     quotaCosts:
       "Coûts : recherche 100 · chaînes/vidéos/catégories 1. Reset à minuit Pacific.",
@@ -240,6 +246,9 @@ export const fr: TranslationDict = {
     addKey: "+ Ajouter une autre clé",
     saveKeys: "Enregistrer les clés",
     removeKey: "Supprimer la clé",
+    envKeysTitle: "Clés d'environnement actives",
+    envKeysHint:
+      "{count} clé(s) chargée(s) depuis YOUTUBE_API_KEYS / YOUTUBE_API_KEY — utilisées pour les appels API et le suivi du quota avec les clés ci-dessous.",
     googleCloudTitle: "Configuration Google Cloud (important)",
     googleCloudSteps: [
       "Activez YouTube Data API v3 dans Google Cloud Console",

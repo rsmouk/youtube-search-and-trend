@@ -216,12 +216,18 @@ export const ar: TranslationDict = {
     quotaPercent: "{pct}% مستخدم",
     quotaLimit: "{limit} وحدة/مفتاح/يوم",
     quotaPerKey: "لكل مفتاح",
-    quotaNoKeys: "لا توجد مفاتيح API",
+    quotaNoKeys: "لا توجد مفاتيح API (الإعدادات أو YOUTUBE_API_KEYS)",
     quotaKeyLine: "{used} مستخدم · {remaining} متبقي من {limit} · {requests} طلب",
     quotaStatus: {
       ok: "جيد",
       low: "منخفض",
       exhausted: "نفد",
+    },
+    quotaSource: {
+      settings: "الإعدادات",
+      env: "المتغيرات",
+      both: "إعدادات + متغيرات",
+      unknown: "أخرى",
     },
     quotaCosts:
       "التكلفة: بحث 100 · قنوات/فيديوهات/تصنيفات 1 لكل طلب. تتجدد منتصف الليل بتوقيت Pacific.",
@@ -235,6 +241,9 @@ export const ar: TranslationDict = {
     addKey: "+ إضافة مفتاح آخر",
     saveKeys: "حفظ المفاتيح",
     removeKey: "حذف المفتاح",
+    envKeysTitle: "مفاتيح المتغيرات البيئية نشطة",
+    envKeysHint:
+      "{count} مفتاح محمّل من YOUTUBE_API_KEYS / YOUTUBE_API_KEY — يُستخدم للطلبات وتتبع الكوطا مع المفاتيح أدناه.",
     googleCloudTitle: "إعداد Google Cloud (مهم)",
     googleCloudSteps: [
       "فعّل YouTube Data API v3 في Google Cloud Console",

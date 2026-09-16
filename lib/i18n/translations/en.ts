@@ -214,12 +214,18 @@ export const en = {
     quotaPercent: "{pct}% used",
     quotaLimit: "{limit} units/key/day",
     quotaPerKey: "Per key",
-    quotaNoKeys: "No API keys configured",
+    quotaNoKeys: "No API keys configured (Settings or YOUTUBE_API_KEYS)",
     quotaKeyLine: "{used} used · {remaining} left of {limit} · {requests} calls",
     quotaStatus: {
       ok: "OK",
       low: "Low",
       exhausted: "Exhausted",
+    },
+    quotaSource: {
+      settings: "Settings",
+      env: "Env",
+      both: "Settings + Env",
+      unknown: "Other",
     },
     quotaCosts: "Costs: search 100 · channels/videos/categories 1 unit each. Resets at midnight Pacific.",
     quotaRefresh: "Refresh",
@@ -233,6 +239,9 @@ export const en = {
     addKey: "+ Add another key",
     saveKeys: "Save keys",
     removeKey: "Remove key",
+    envKeysTitle: "Environment keys active",
+    envKeysHint:
+      "{count} key(s) loaded from YOUTUBE_API_KEYS / YOUTUBE_API_KEY — used for API calls and quota tracking alongside keys below.",
     googleCloudTitle: "Google Cloud setup (important)",
     googleCloudSteps: [
       "Enable YouTube Data API v3 in Google Cloud Console",

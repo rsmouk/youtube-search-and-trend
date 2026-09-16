@@ -1,6 +1,7 @@
 import { createHash } from "crypto";
+import type { ServerApiKeyInfo } from "@/lib/api-keys-server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { KeyQuotaStat, QuotaStatsResult } from "./quota-types";
+import type { KeyQuotaStat, KeyQuotaSource, QuotaStatsResult } from "./quota-types";
 
 export type { KeyQuotaStat, QuotaStatsResult };
 
@@ -49,28 +50,71 @@ export async function recordApiQuotaUsage(
 ): Promise<void> {
   if (units <= 0) return;
   const admin = createAdminClient();
-  if (!admin) return;
+  if (!admin) {
+    console.error("recordApiQuotaUsage: SUPABASE_SERVICE_ROLE_KEY not configured");
+    return;
+  }
 
-  try {
-    await admin.rpc("increment_youtube_quota", {
-      p_usage_date: getPacificDateString(),
-      p_key_suffix: apiKeySuffix(apiKey),
-      p_key_hash: hashApiKey(apiKey),
-      p_units: units,
-      p_requests: requests,
-    });
-  } catch (err) {
-    console.error("recordApiQuotaUsage:", err);
+  const { error } = await admin.rpc("increment_youtube_quota", {
+    p_usage_date: getPacificDateString(),
+    p_key_suffix: apiKeySuffix(apiKey),
+    p_key_hash: hashApiKey(apiKey),
+    p_units: units,
+    p_requests: requests,
+  });
+
+  if (error) {
+    console.error("recordApiQuotaUsage:", error.message);
   }
 }
 
+function buildKeyStat(
+  keySuffix: string,
+  keyHash: string,
+  unitsUsed: number,
+  requestCount: number,
+  dailyLimit: number,
+  source: KeyQuotaSource
+): KeyQuotaStat {
+  const unitsRemaining = Math.max(dailyLimit - unitsUsed, 0);
+  const percentUsed = Math.min(100, Math.round((unitsUsed / dailyLimit) * 100));
+  let status: KeyQuotaStat["status"] = "ok";
+  if (unitsRemaining <= 0) status = "exhausted";
+  else if (percentUsed >= 80) status = "low";
+
+  return {
+    keySuffix,
+    keyHash,
+    unitsUsed,
+    requestCount,
+    dailyLimit,
+    unitsRemaining,
+    percentUsed,
+    status,
+    source,
+  };
+}
+
 export async function getQuotaStats(
-  configuredKeys: string[]
+  configuredKeys: Array<string | ServerApiKeyInfo>
 ): Promise<QuotaStatsResult> {
   const date = getPacificDateString();
   const dailyLimit = getDailyQuotaLimit();
-  const uniqueKeys = [...new Set(configuredKeys.filter(Boolean))];
   const admin = createAdminClient();
+
+  const sourceByHash = new Map<string, KeyQuotaSource>();
+  const uniqueKeys: string[] = [];
+  for (const entry of configuredKeys) {
+    if (typeof entry === "string") {
+      if (!entry || uniqueKeys.includes(entry)) continue;
+      uniqueKeys.push(entry);
+      sourceByHash.set(hashApiKey(entry), "unknown");
+    } else if (entry.key) {
+      if (uniqueKeys.includes(entry.key)) continue;
+      uniqueKeys.push(entry.key);
+      sourceByHash.set(hashApiKey(entry.key), entry.source);
+    }
+  }
 
   const usageByHash = new Map<
     string,
@@ -83,7 +127,9 @@ export async function getQuotaStats(
       .select("key_suffix, key_hash, units_used, request_count")
       .eq("usage_date", date);
 
-    if (!error && data) {
+    if (error) {
+      console.error("getQuotaStats:", error.message);
+    } else if (data) {
       for (const row of data) {
         usageByHash.set(row.key_hash as string, {
           key_suffix: row.key_suffix as string,
@@ -97,42 +143,29 @@ export async function getQuotaStats(
   const keys: KeyQuotaStat[] = uniqueKeys.map((key) => {
     const hash = hashApiKey(key);
     const usage = usageByHash.get(hash);
-    const unitsUsed = usage?.units_used ?? 0;
-    const requestCount = usage?.request_count ?? 0;
-    const unitsRemaining = Math.max(dailyLimit - unitsUsed, 0);
-    const percentUsed = Math.min(100, Math.round((unitsUsed / dailyLimit) * 100));
-    let status: KeyQuotaStat["status"] = "ok";
-    if (unitsRemaining <= 0) status = "exhausted";
-    else if (percentUsed >= 80) status = "low";
-
-    return {
-      keySuffix: apiKeySuffix(key),
-      keyHash: hash,
-      unitsUsed,
-      requestCount,
+    return buildKeyStat(
+      apiKeySuffix(key),
+      hash,
+      usage?.units_used ?? 0,
+      usage?.request_count ?? 0,
       dailyLimit,
-      unitsRemaining,
-      percentUsed,
-      status,
-    };
+      sourceByHash.get(hash) ?? "unknown"
+    );
   });
 
   // Include usage rows for keys no longer configured
   for (const [hash, usage] of usageByHash) {
     if (keys.some((k) => k.keyHash === hash)) continue;
-    const unitsUsed = usage.units_used;
-    const unitsRemaining = Math.max(dailyLimit - unitsUsed, 0);
-    const percentUsed = Math.min(100, Math.round((unitsUsed / dailyLimit) * 100));
-    keys.push({
-      keySuffix: usage.key_suffix,
-      keyHash: hash,
-      unitsUsed,
-      requestCount: usage.request_count,
-      dailyLimit,
-      unitsRemaining,
-      percentUsed,
-      status: unitsRemaining <= 0 ? "exhausted" : percentUsed >= 80 ? "low" : "ok",
-    });
+    keys.push(
+      buildKeyStat(
+        usage.key_suffix,
+        hash,
+        usage.units_used,
+        usage.request_count,
+        dailyLimit,
+        "unknown"
+      )
+    );
   }
 
   const unitsUsed = keys.reduce((sum, k) => sum + k.unitsUsed, 0);
@@ -156,7 +189,6 @@ export async function getQuotaStats(
       requestCount,
       percentUsed,
     },
-    note:
-      "tracked_internally",
+    note: "tracked_internally",
   };
 }

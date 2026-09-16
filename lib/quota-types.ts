@@ -1,3 +1,5 @@
+export type KeyQuotaSource = "settings" | "env" | "both" | "unknown";
+
 export interface KeyQuotaStat {
   keySuffix: string;
   keyHash: string;
@@ -7,6 +9,7 @@ export interface KeyQuotaStat {
   unitsRemaining: number;
   percentUsed: number;
   status: "ok" | "low" | "exhausted";
+  source: KeyQuotaSource;
 }
 
 export interface QuotaStatsResult {

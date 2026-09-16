@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/admin-auth";
-import { getServerApiKeys } from "@/lib/api-keys-server";
+import { getServerApiKeysDetailed } from "@/lib/api-keys-server";
 import { getQuotaStats } from "@/lib/youtube-quota";
 
 export async function GET() {
@@ -9,7 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: auth.error }, { status: auth.status });
   }
 
-  const keys = await getServerApiKeys();
+  const keys = await getServerApiKeysDetailed();
   const stats = await getQuotaStats(keys);
   return NextResponse.json(stats);
 }
