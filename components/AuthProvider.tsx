@@ -53,12 +53,30 @@ export default function AuthProvider({
   const fetchProfile = useCallback(
     async (userId: string) => {
       if (!supabase) return;
-      const { data } = await supabase
+
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc("get_my_profile")
+        .maybeSingle();
+
+      if (rpcData) {
+        setProfile(rpcData as Profile);
+        return;
+      }
+
+      const { data, error } = await supabase
         .from("profiles")
         .select("id, email, role")
         .eq("id", userId)
-        .single();
-      if (data) setProfile(data as Profile);
+        .maybeSingle();
+
+      if (data) {
+        setProfile(data as Profile);
+      } else {
+        setProfile(null);
+        if (rpcError || error) {
+          console.error("Profile fetch failed:", rpcError ?? error);
+        }
+      }
     },
     [supabase]
   );

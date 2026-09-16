@@ -13,10 +13,38 @@ alter table public.profiles enable row level security;
 create policy "profiles_read_own" on public.profiles
   for select using (auth.uid() = id);
 
-create policy "profiles_read_admin" on public.profiles
-  for select using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
+-- تجنّب التكرار اللانهائي في RLS
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1 from public.profiles
+    where id = auth.uid() and role = 'admin'
   );
+$$;
+
+create policy "profiles_read_admin" on public.profiles
+  for select using (public.is_admin());
+
+-- جلب ملف المستخدم الحالي (يتجاوز مشاكل RLS)
+create or replace function public.get_my_profile()
+returns table (id uuid, email text, role text)
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select p.id, p.email, p.role
+  from public.profiles p
+  where p.id = auth.uid();
+$$;
+
+grant execute on function public.is_admin() to authenticated;
+grant execute on function public.get_my_profile() to authenticated;
 
 create policy "profiles_update_own" on public.profiles
   for update using (auth.uid() = id);
@@ -51,9 +79,7 @@ create policy "site_channels_read_all" on public.site_channels
   for select using (true);
 
 create policy "site_channels_admin_update" on public.site_channels
-  for update using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+  for update using (public.is_admin());
 
 -- User saved channels
 create table if not exists public.user_saved_channels (
@@ -87,9 +113,7 @@ create policy "saved_delete_own" on public.user_saved_channels
   for delete using (auth.uid() = user_id);
 
 create policy "saved_admin_read" on public.user_saved_channels
-  for select using (
-    exists (select 1 from public.profiles p where p.id = auth.uid() and p.role = 'admin')
-  );
+  for select using (public.is_admin());
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
