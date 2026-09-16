@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/components/I18nProvider";
 import type { VideoCategory } from "@/lib/types";
 
 interface CategoryButtonsProps {
@@ -15,8 +16,10 @@ export default function CategoryButtons({
   loading,
   onSelect,
 }: CategoryButtonsProps) {
+  const { t } = useI18n();
+
   const allCategories: VideoCategory[] = [
-    { id: "", title: "الكل" },
+    { id: "", title: t("category.all") },
     ...categories,
   ];
 

@@ -3,16 +3,17 @@
 import { useCallback, useEffect, useState } from "react";
 import Header from "@/components/Header";
 import CategoryButtons from "@/components/CategoryButtons";
+import SearchableSelect from "@/components/SearchableSelect";
 import TrendingVideoCard from "@/components/TrendingVideoCard";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
+import { useI18n } from "@/components/I18nProvider";
 import {
   DEFAULT_TRENDING_PREFS,
-  getCountryLabel,
   getTrendingPrefs,
+  getTrendingRegionLabel,
+  getTrendingRegionOptions,
   saveTrendingPrefs,
-  TRENDING_COUNTRIES,
 } from "@/lib/filters";
-import { getApiKeys } from "@/lib/storage";
 import {
   formatCacheRemaining,
   getCachedTrendingVideos,
@@ -20,11 +21,12 @@ import {
   getCacheRemainingMs,
   getVideosCacheKey,
 } from "@/lib/trending-cache";
-import { YouTubeApiError } from "@/lib/youtube";
+import { translateYouTubeError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 
 export default function TrendingPage() {
+  const { t, locale } = useI18n();
   const [mounted, setMounted] = useState(false);
   const [regionCode, setRegionCode] = useState(DEFAULT_TRENDING_PREFS.regionCode);
   const [categoryId, setCategoryId] = useState(DEFAULT_TRENDING_PREFS.categoryId);
@@ -42,33 +44,28 @@ export default function TrendingPage() {
       setLoadingVideos(true);
       setError("");
       try {
-        const apiKeys = getApiKeys();
-        const { data, fromCache: cached } = await getCachedTrendingVideos(
-          region,
-          apiKeys,
-          category || undefined
-        );
+        const { data, fromCache: cached, error: errCode } =
+          await getCachedTrendingVideos(region, category || undefined);
+        if (errCode) {
+          setVideos([]);
+          setError(translateYouTubeError(errCode, t));
+          return;
+        }
         setVideos(data);
         setFromCache(cached);
-        const remaining = getCacheRemainingMs(
-          getVideosCacheKey(region, category)
-        );
-        setCacheRemaining(formatCacheRemaining(remaining));
+        const remaining = getCacheRemainingMs(getVideosCacheKey(region, category));
+        setCacheRemaining(formatCacheRemaining(remaining, t));
         if (data.length === 0) {
-          setError("لا توجد فيديوهات ترند في هذا التصنيف");
+          setError(t("trending.noVideos"));
         }
-      } catch (err) {
+      } catch {
         setVideos([]);
-        if (err instanceof YouTubeApiError) {
-          setError(err.message);
-        } else {
-          setError("تعذر جلب الفيديوهات");
-        }
+        setError(t("trending.fetchVideosError"));
       } finally {
         setLoadingVideos(false);
       }
     },
-    []
+    [t]
   );
 
   const loadCategoriesAndVideos = useCallback(
@@ -76,8 +73,13 @@ export default function TrendingPage() {
       setLoadingCategories(true);
       setError("");
       try {
-        const apiKeys = getApiKeys();
-        const { data: cats } = await getCachedVideoCategories(region, apiKeys);
+        const { data: cats, error: errCode } = await getCachedVideoCategories(region);
+        if (errCode) {
+          setCategories([]);
+          setVideos([]);
+          setError(translateYouTubeError(errCode, t));
+          return;
+        }
         setCategories(cats);
 
         const validCategory =
@@ -87,19 +89,15 @@ export default function TrendingPage() {
         }
 
         await loadVideos(region, validCategory);
-      } catch (err) {
+      } catch {
         setCategories([]);
         setVideos([]);
-        if (err instanceof YouTubeApiError) {
-          setError(err.message);
-        } else {
-          setError("تعذر جلب التصنيفات");
-        }
+        setError(t("trending.fetchCategoriesError"));
       } finally {
         setLoadingCategories(false);
       }
     },
-    [loadVideos]
+    [loadVideos, t]
   );
 
   useEffect(() => {
@@ -134,45 +132,48 @@ export default function TrendingPage() {
     );
   }
 
+  const regionLabel = getTrendingRegionLabel(
+    regionCode,
+    locale,
+    t("common.unspecified")
+  );
+
   return (
     <>
       <Header />
       <main className={pageMain}>
-        <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">الترند</h1>
-          <p className="mt-2 text-stone-500">
-            أكثر الفيديوهات مشاهدة حالياً حسب الدولة والتصنيف
-          </p>
-          {fromCache && cacheRemaining && (
-            <p className="mt-2 text-xs text-stone-400">
-              بيانات محفوظة محلياً — تُحدَّث بعد {cacheRemaining}
-            </p>
-          )}
-        </section>
+        <section className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <h1 className="text-3xl font-semibold text-stone-800">{t("trending.title")}</h1>
+            <p className="mt-2 text-stone-500">{t("trending.subtitle")}</p>
+            {fromCache && cacheRemaining && (
+              <p className="mt-2 text-xs text-stone-400">
+                {t("trending.cachedHint", { time: cacheRemaining })}
+              </p>
+            )}
+          </div>
 
-        <div className="rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm">
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs text-stone-400">الدولة</span>
-            <select
+          <div className="w-full shrink-0 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm lg:w-80">
+            <SearchableSelect
+              label={t("trending.country")}
               value={regionCode}
+              options={getTrendingRegionOptions(locale, t("common.all")).map((c) => ({
+                value: c.code,
+                label: c.label,
+              }))}
               disabled={loadingCategories || loadingVideos}
-              onChange={(e) => handleCountryChange(e.target.value)}
-              className="rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-700 outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100 disabled:opacity-50"
-            >
-              {TRENDING_COUNTRIES.map((c) => (
-                <option key={c.code} value={c.code}>
-                  {c.label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+              placeholder={t("trending.searchCountry")}
+              menuMaxHeight={280}
+              onChange={handleCountryChange}
+            />
+          </div>
+        </section>
 
         <section className="mt-6">
           <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-sm font-medium text-stone-600">التصنيفات</h2>
+            <h2 className="text-sm font-medium text-stone-600">{t("trending.categories")}</h2>
             {loadingCategories && (
-              <span className="text-xs text-stone-400">جاري التحميل...</span>
+              <span className="text-xs text-stone-400">{t("trending.loadingCategories")}</span>
             )}
           </div>
           <CategoryButtons
@@ -186,11 +187,11 @@ export default function TrendingPage() {
         <section className="mt-8">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-lg font-medium text-stone-700">
-              ترند {getCountryLabel(regionCode)}
+              {t("trending.trendingIn", { country: regionLabel })}
             </h2>
             {!loadingVideos && videos.length > 0 && (
               <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                {videos.length} فيديو
+                {t("common.videos", { count: videos.length })}
               </span>
             )}
           </div>
@@ -204,7 +205,7 @@ export default function TrendingPage() {
           {loadingVideos ? (
             <div className="flex flex-col items-center gap-3 py-16 text-stone-400">
               <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-200 border-t-stone-500" />
-              <p className="text-sm">جاري جلب الفيديوهات...</p>
+              <p className="text-sm">{t("trending.loadingVideos")}</p>
             </div>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -221,10 +222,7 @@ export default function TrendingPage() {
         </section>
       </main>
 
-      <VideoPlayerModal
-        video={selectedVideo}
-        onClose={() => setSelectedVideo(null)}
-      />
+      <VideoPlayerModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
     </>
   );
 }

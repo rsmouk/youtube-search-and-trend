@@ -4,32 +4,14 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
-import {
-  createClient,
-  isSupabaseConfigured,
-} from "@/lib/supabase/client";
+import { useI18n } from "@/components/I18nProvider";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
-
-function translateAuthError(message: string): string {
-  const lower = message.toLowerCase();
-  if (lower.includes("invalid login credentials")) {
-    return "البريد أو كلمة المرور غير صحيحة";
-  }
-  if (lower.includes("email not confirmed")) {
-    return "يجب تأكيد بريدك أولاً — راجع صندوق الوارد";
-  }
-  if (lower.includes("user already registered")) {
-    return "هذا البريد مسجّل مسبقاً — جرّب تسجيل الدخول";
-  }
-  if (lower.includes("password")) {
-    return "كلمة المرور ضعيفة — 6 أحرف على الأقل";
-  }
-  return message;
-}
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -38,16 +20,21 @@ function LoginForm() {
   const [error, setError] = useState("");
   const configured = isSupabaseConfigured();
 
+  const translateAuthError = (msg: string): string => {
+    const lower = msg.toLowerCase();
+    if (lower.includes("invalid login credentials")) return t("login.invalidCredentials");
+    if (lower.includes("email not confirmed")) return t("login.emailNotConfirmed");
+    if (lower.includes("user already registered")) return t("login.alreadyRegistered");
+    if (lower.includes("password")) return t("login.weakPassword");
+    return msg;
+  };
+
   useEffect(() => {
     if (searchParams.get("error") === "auth") {
       const msg = searchParams.get("msg");
-      setError(
-        msg
-          ? decodeURIComponent(msg)
-          : "فشل تسجيل الدخول — تحقق من Supabase و Redirect URLs"
-      );
+      setError(msg ? decodeURIComponent(msg) : t("login.authFailed"));
     }
-  }, [searchParams]);
+  }, [searchParams, t]);
 
   const finishLogin = () => {
     router.refresh();
@@ -57,7 +44,7 @@ function LoginForm() {
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!configured) {
-      setError("Supabase غير مُعد — أضف NEXT_PUBLIC_SUPABASE_URL و ANON_KEY");
+      setError(t("login.supabaseNotConfigured"));
       return;
     }
 
@@ -83,17 +70,17 @@ function LoginForm() {
         }
 
         if (data.session) {
-          setMessage("تم إنشاء الحساب بنجاح");
+          setMessage(t("login.signupSuccess"));
           finishLogin();
           return;
         }
 
-        setMessage(
-          "تم إرسال رابط التأكيد لبريدك — افتحه ثم سجّل الدخول. أو عطّل «Confirm email» من Supabase للاختبار."
-        );
+        setMessage(t("login.confirmEmailSent"));
       } else {
-        const { data, error: signInError } =
-          await supabase.auth.signInWithPassword({ email, password });
+        const { data, error: signInError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
 
         if (signInError) {
           setError(translateAuthError(signInError.message));
@@ -101,18 +88,14 @@ function LoginForm() {
         }
 
         if (!data.session) {
-          setError("لم يتم إنشاء جلسة — تحقق من تأكيد البريد");
+          setError(t("login.noSession"));
           return;
         }
 
         finishLogin();
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "حدث خطأ غير متوقع — تحقق من إعدادات Supabase"
-      );
+      setError(err instanceof Error ? err.message : t("errors.unexpected"));
     } finally {
       setLoading(false);
     }
@@ -120,7 +103,7 @@ function LoginForm() {
 
   const handleOAuth = async (provider: "google" | "facebook" | "twitter") => {
     if (!configured) {
-      setError("Supabase غير مُعد — أضف متغيرات البيئة في Vercel");
+      setError(t("login.supabaseNotConfigured"));
       return;
     }
 
@@ -147,11 +130,9 @@ function LoginForm() {
         return;
       }
 
-      setError("تعذر بدء تسجيل الدخول — تأكد من تفعيل المزود في Supabase");
+      setError(t("login.oauthStartFailed"));
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "فشل OAuth"
-      );
+      setError(err instanceof Error ? err.message : t("login.oauthFailed"));
     } finally {
       setLoading(false);
     }
@@ -163,21 +144,15 @@ function LoginForm() {
       <main className={pageMainMd}>
         <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
           <h1 className="text-2xl font-semibold text-stone-800">
-            {mode === "login" ? "تسجيل الدخول" : "إنشاء حساب"}
+            {mode === "login" ? t("login.title") : t("login.signupTitle")}
           </h1>
-          <p className="mt-2 text-sm text-stone-500">
-            سجّل لحفظ قنواتك في السحابة
-          </p>
+          <p className="mt-2 text-sm text-stone-500">{t("login.subtitle")}</p>
 
           {!configured && (
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-              Supabase غير مُعد. أضف في Vercel:
-              <code className="mt-1 block text-xs">
-                NEXT_PUBLIC_SUPABASE_URL
-              </code>
-              <code className="block text-xs">
-                NEXT_PUBLIC_SUPABASE_ANON_KEY
-              </code>
+              {t("login.supabaseNotConfigured")}
+              <code className="mt-1 block text-xs">NEXT_PUBLIC_SUPABASE_URL</code>
+              <code className="block text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code>
             </div>
           )}
 
@@ -210,7 +185,7 @@ function LoginForm() {
 
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-stone-200" />
-            <span className="text-xs text-stone-400">أو بالبريد</span>
+            <span className="text-xs text-stone-400">{t("login.orEmail")}</span>
             <div className="h-px flex-1 bg-stone-200" />
           </div>
 
@@ -220,7 +195,7 @@ function LoginForm() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="البريد الإلكتروني"
+              placeholder={t("login.email")}
               disabled={!configured}
               className="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100 disabled:opacity-50"
             />
@@ -230,7 +205,7 @@ function LoginForm() {
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="كلمة المرور"
+              placeholder={t("login.password")}
               disabled={!configured}
               className="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100 disabled:opacity-50"
             />
@@ -240,17 +215,15 @@ function LoginForm() {
               className="w-full rounded-xl bg-stone-800 py-3 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
             >
               {loading
-                ? "جاري..."
+                ? t("login.loading")
                 : mode === "login"
-                  ? "دخول"
-                  : "إنشاء حساب"}
+                  ? t("login.login")
+                  : t("login.signup")}
             </button>
           </form>
 
           {error && (
-            <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">
-              {error}
-            </p>
+            <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           {message && (
             <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
@@ -267,16 +240,14 @@ function LoginForm() {
             }}
             className="mt-4 w-full text-center text-sm text-stone-500 hover:text-stone-700"
           >
-            {mode === "login"
-              ? "ليس لديك حساب؟ أنشئ واحداً"
-              : "لديك حساب؟ سجّل الدخول"}
+            {mode === "login" ? t("login.switchToSignup") : t("login.switchToLogin")}
           </button>
 
           <Link
             href="/"
             className="mt-4 block text-center text-xs text-stone-400 hover:text-stone-600"
           >
-            العودة للرئيسية
+            {t("login.backHome")}
           </Link>
         </div>
       </main>

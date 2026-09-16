@@ -23,13 +23,7 @@ export function getYouTubeErrorHelp(message: string, reason?: string): string {
     lower.includes("requests to this api") ||
     reason === "forbidden"
   ) {
-    return (
-      "المفتاح محظور أو غير مفعّل. تأكد من:\n" +
-      "1. تفعيل YouTube Data API v3 في Google Cloud Console\n" +
-      "2. في Credentials → API restrictions → اختر «Restrict key» وفعّل YouTube Data API v3\n" +
-      "3. في Application restrictions → HTTP referrers → أضف نطاق موقعك:\n" +
-      "   localhost:3000/* و your-app.vercel.app/*"
-    );
+    return "blocked_key";
   }
 
   if (
@@ -37,16 +31,11 @@ export function getYouTubeErrorHelp(message: string, reason?: string): string {
     lower.includes("referrer") ||
     reason === "API_KEY_HTTP_REFERRER_BLOCKED"
   ) {
-    return (
-      "المفتاح مقيد بالنطاق (Referrer). أضف نطاق موقعك في Google Cloud:\n" +
-      "Credentials → Application restrictions → HTTP referrers:\n" +
-      "http://localhost:3000/*\n" +
-      "https://your-app.vercel.app/*"
-    );
+    return "referrer_blocked";
   }
 
   if (reason === "quotaExceeded" || reason === "dailyLimitExceeded") {
-    return "نفدت الحصة اليومية لهذا المفتاح. أضف مفتاحاً آخر أو انتظر حتى منتصف الليل (توقيت Pacific).";
+    return "quota_exceeded";
   }
 
   return message;
@@ -85,11 +74,7 @@ async function fetchWithKeyRotation<T>(
   const keys = [...new Set([...apiKeys, ...getEnvKeys()])];
 
   if (keys.length === 0) {
-    throw new YouTubeApiError(
-      "لا يوجد مفتاح API. أضف مفتاحاً من صفحة الإعدادات.",
-      400,
-      "missing_api_key"
-    );
+    throw new YouTubeApiError("missing_api_key", 400, "missing_api_key");
   }
 
   let lastError: YouTubeApiError | null = null;
@@ -108,24 +93,21 @@ async function fetchWithKeyRotation<T>(
       return data as T;
     }
 
-    const message = data?.error?.message ?? "فشل طلب YouTube API";
+    const message = data?.error?.message ?? "YouTube API request failed";
     const reason =
       data?.error?.errors?.[0]?.reason ??
       data?.error?.details?.[0]?.reason ??
       data?.error?.message;
 
-    lastError = new YouTubeApiError(
-      getYouTubeErrorHelp(message, reason),
-      res.status,
-      reason
-    );
+    const helpKey = getYouTubeErrorHelp(message, reason);
+    lastError = new YouTubeApiError(helpKey, res.status, reason);
 
     if (!shouldTryNextKey(reason, message)) {
       throw lastError;
     }
   }
 
-  throw lastError ?? new YouTubeApiError("فشل جميع مفاتيح API", 429);
+  throw lastError ?? new YouTubeApiError("all_keys_failed", 429);
 }
 
 interface SearchListResponse {
@@ -157,7 +139,7 @@ export async function searchRecentChannels(
 ): Promise<{ channels: Channel[]; totalResults: number }> {
   const trimmed = keyword.trim();
   if (!trimmed) {
-    throw new YouTubeApiError("أدخل كلمة للبحث", 400);
+    throw new YouTubeApiError("enter_keyword", 400);
   }
 
   const publishedAfter = new Date();
@@ -183,7 +165,7 @@ export async function searchRecentChannels(
       return `${YOUTUBE_API_BASE}/search?${params}`;
     },
     apiKeys,
-    referer ?? (typeof window !== "undefined" ? window.location.origin + "/" : undefined)
+    referer
   );
 
   const channelMap = new Map<
@@ -217,7 +199,7 @@ export async function searchRecentChannels(
       return `${YOUTUBE_API_BASE}/channels?${params}`;
     },
     apiKeys,
-    referer ?? (typeof window !== "undefined" ? window.location.origin + "/" : undefined)
+    referer
   );
 
   const channels: Channel[] = (channelsData.items ?? []).map((item) => {
@@ -255,10 +237,7 @@ export async function searchRecentChannels(
 }
 
 function getReferer(referer?: string): string | undefined {
-  return (
-    referer ??
-    (typeof window !== "undefined" ? window.location.origin + "/" : undefined)
-  );
+  return referer;
 }
 
 interface VideoCategoriesResponse {
@@ -357,4 +336,23 @@ export async function getTrendingVideos(
     likeCount: item.statistics.likeCount,
     commentCount: item.statistics.commentCount,
   }));
+}
+
+export function translateYouTubeError(code: string, t: (key: string) => string): string {
+  switch (code) {
+    case "missing_api_key":
+      return t("errors.missingApiKey");
+    case "blocked_key":
+      return t("youtube.blockedKey");
+    case "referrer_blocked":
+      return t("youtube.referrerBlocked");
+    case "quota_exceeded":
+      return t("youtube.quotaExceeded");
+    case "enter_keyword":
+      return t("youtube.enterKeyword");
+    case "all_keys_failed":
+      return t("youtube.allKeysFailed");
+    default:
+      return code;
+  }
 }

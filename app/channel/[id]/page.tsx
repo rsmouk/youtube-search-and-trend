@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import RssVideoCard from "@/components/RssVideoCard";
 import VideoPlayerModal from "@/components/VideoPlayerModal";
 import { useAuth } from "@/components/AuthProvider";
+import { useI18n } from "@/components/I18nProvider";
 import { getCachedChannel } from "@/lib/channel-cache";
 import { getSiteChannelById, siteRowToChannel } from "@/lib/channels-db";
 import { channelToSaved } from "@/lib/channel-utils";
@@ -26,6 +27,7 @@ export default function ChannelPage() {
   const params = useParams();
   const channelId = params.id as string;
   const { user } = useAuth();
+  const { t, locale } = useI18n();
   const [channel, setChannel] = useState<Channel | null>(null);
   const [videos, setVideos] = useState<RssVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,9 +35,7 @@ export default function ChannelPage() {
   const [notFound, setNotFound] = useState(false);
   const [saved, setSaved] = useState(false);
   const [shareMsg, setShareMsg] = useState("");
-  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(
-    null
-  );
+  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(null);
 
   useEffect(() => {
     Promise.all([
@@ -86,10 +86,7 @@ export default function ChannelPage() {
       await removeChannelForUser(channelId, user?.id);
       setSaved(false);
     } else {
-      await saveChannelForUser(
-        channelToSaved(channel, thumbnail),
-        user?.id
-      );
+      await saveChannelForUser(channelToSaved(channel, thumbnail), user?.id);
       setSaved(true);
     }
   };
@@ -98,7 +95,7 @@ export default function ChannelPage() {
     if (!channel) return;
     try {
       const result = await shareChannelPage(channelId, channel.snippet.title);
-      setShareMsg(result === "shared" ? "تمت المشاركة" : "تم نسخ الرابط");
+      setShareMsg(result === "shared" ? t("common.shared") : t("common.linkCopied"));
       setTimeout(() => setShareMsg(""), 2000);
     } catch {
       /* cancelled */
@@ -134,9 +131,9 @@ export default function ChannelPage() {
       <>
         <Header />
         <main className={`${pageMainChannel} text-center`}>
-          <p className="text-stone-500">القناة غير موجودة</p>
+          <p className="text-stone-500">{t("channel.notFound")}</p>
           <Link href="/" className="mt-4 inline-block text-sm underline">
-            العودة للبحث
+            {t("channel.backSearch")}
           </Link>
         </main>
       </>
@@ -157,9 +154,7 @@ export default function ChannelPage() {
               className="h-20 w-20 rounded-full border border-stone-100 object-cover"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-semibold text-stone-800">
-                {channel.snippet.title}
-              </h1>
+              <h1 className="text-2xl font-semibold text-stone-800">{channel.snippet.title}</h1>
               {channel.snippet.customUrl && (
                 <p className="mt-1 text-sm text-stone-500">
                   @{channel.snippet.customUrl.replace("@", "")}
@@ -175,8 +170,8 @@ export default function ChannelPage() {
               <button
                 type="button"
                 onClick={handleShare}
-                title="مشاركة"
-                aria-label="مشاركة"
+                title={t("common.share")}
+                aria-label={t("common.share")}
                 className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
               >
                 <svg
@@ -195,8 +190,8 @@ export default function ChannelPage() {
               <button
                 type="button"
                 onClick={toggleSave}
-                title={saved ? "محفوظة" : "حفظ"}
-                aria-label="حفظ"
+                title={saved ? t("common.saved") : t("common.save")}
+                aria-label={t("common.save")}
                 className={`flex h-10 w-10 items-center justify-center rounded-xl ${
                   saved
                     ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
@@ -219,19 +214,19 @@ export default function ChannelPage() {
 
           <div className="mt-6 grid grid-cols-3 gap-3">
             <StatBox
-              label="المشتركون"
+              label={t("channel.subscribers")}
               value={
                 channel.statistics.hiddenSubscriberCount
-                  ? "مخفيون"
+                  ? t("channel.hidden")
                   : formatCount(channel.statistics.subscriberCount)
               }
             />
             <StatBox
-              label="المشاهدات"
+              label={t("channel.totalViews")}
               value={formatCount(channel.statistics.viewCount)}
             />
             <StatBox
-              label="الفيديوهات"
+              label={t("channel.videoCount")}
               value={formatCount(channel.statistics.videoCount)}
             />
           </div>
@@ -239,12 +234,16 @@ export default function ChannelPage() {
           <div className="mt-4 space-y-2 text-sm text-stone-600">
             {channel.snippet.country && (
               <p>
-                <span className="text-stone-400">البلد: </span>
-                {getCountryLabel(channel.snippet.country)}
+                <span className="text-stone-400">{t("channel.countryLabel")}: </span>
+                {getCountryLabel(
+                  channel.snippet.country,
+                  locale,
+                  t("common.unspecified")
+                )}
               </p>
             )}
             <p>
-              <span className="text-stone-400">تاريخ الإضافة: </span>
+              <span className="text-stone-400">{t("channel.addedDate")}: </span>
               {formatDate(channel.snippet.publishedAt)}
             </p>
           </div>
@@ -262,47 +261,37 @@ export default function ChannelPage() {
             rel="noopener noreferrer"
             className="mt-5 flex w-full items-center justify-center rounded-2xl bg-stone-800 py-3 text-sm font-medium text-white hover:bg-stone-700"
           >
-            زيارة القناة على YouTube
+            {t("channel.visitYoutube")}
           </a>
         </div>
 
         <section className="mt-8">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-stone-700">آخر الفيديوهات</h2>
-            <span className="text-xs text-stone-400">عبر YouTube RSS — بدون API</span>
+            <h2 className="text-lg font-medium text-stone-700">{t("channel.latestVideos")}</h2>
+            <span className="text-xs text-stone-400">{t("channel.rssHint")}</span>
           </div>
 
           {videosLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-24 animate-pulse rounded-2xl bg-stone-100"
-                />
+                <div key={i} className="h-24 animate-pulse rounded-2xl bg-stone-100" />
               ))}
             </div>
           ) : videos.length === 0 ? (
             <p className="rounded-2xl border border-dashed border-stone-200 py-10 text-center text-sm text-stone-500">
-              لا توجد فيديوهات
+              {t("channel.noVideos")}
             </p>
           ) : (
             <div className="space-y-3">
               {videos.map((video) => (
-                <RssVideoCard
-                  key={video.id}
-                  video={video}
-                  onPlay={playRssVideo}
-                />
+                <RssVideoCard key={video.id} video={video} onPlay={playRssVideo} />
               ))}
             </div>
           )}
         </section>
       </main>
 
-      <VideoPlayerModal
-        video={selectedVideo}
-        onClose={() => setSelectedVideo(null)}
-      />
+      <VideoPlayerModal video={selectedVideo} onClose={() => setSelectedVideo(null)} />
     </>
   );
 }

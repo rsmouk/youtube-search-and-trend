@@ -4,28 +4,26 @@ import { useEffect, useState } from "react";
 import Header from "@/components/Header";
 import ChannelCard from "@/components/ChannelCard";
 import SearchableSelect from "@/components/SearchableSelect";
+import { useI18n } from "@/components/I18nProvider";
 import {
   getAllSiteChannels,
   siteRowToChannel,
   type SiteChannelRow,
 } from "@/lib/channels-db";
-import { COUNTRY_OPTIONS } from "@/lib/filters";
+import { getCountryOptions } from "@/lib/filters";
 import { pageMain } from "@/lib/layout-classes";
 
-const countryFilterOptions = [
-  { value: "", label: "كل الدول" },
-  ...COUNTRY_OPTIONS.filter((c) => c.code).map((c) => ({
-    value: c.code,
-    label: c.label,
-  })),
-];
-
 export default function ChannelsPage() {
+  const { t, locale } = useI18n();
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [country, setCountry] = useState("");
   const [featuredOnly, setFeaturedOnly] = useState(false);
+
+  const countryFilterOptions = getCountryOptions(locale, t("common.allCountries")).map(
+    (c) => ({ value: c.code, label: c.label })
+  );
 
   const load = async () => {
     setLoading(true);
@@ -48,35 +46,31 @@ export default function ChannelsPage() {
       <Header />
       <main className={pageMain}>
         <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">
-            دليل القنوات
-          </h1>
-          <p className="mt-2 text-stone-500">
-            جميع القنوات المكتشفة عبر البحث في الموقع
-          </p>
+          <h1 className="text-3xl font-semibold text-stone-800">{t("channels.title")}</h1>
+          <p className="mt-2 text-stone-500">{t("channels.subtitle")}</p>
         </section>
 
         <div className="mb-8 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm">
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="flex flex-col gap-1.5 sm:col-span-1">
-              <span className="text-xs text-stone-400">بحث بالاسم</span>
+              <span className="text-xs text-stone-400">{t("channels.searchByName")}</span>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="اسم القناة..."
+                placeholder={t("channels.searchPlaceholder")}
                 className="rounded-xl border border-stone-200 px-4 py-2.5 text-sm outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100"
               />
             </label>
             <SearchableSelect
-              label="الدولة"
+              label={t("trending.country")}
               value={country}
               options={countryFilterOptions}
-              placeholder="كل الدول"
+              placeholder={t("common.allCountries")}
               onChange={setCountry}
             />
             <label className="flex flex-col gap-1.5">
-              <span className="text-xs text-stone-400">تصفية</span>
+              <span className="text-xs text-stone-400">{t("channels.filter")}</span>
               <button
                 type="button"
                 onClick={() => setFeaturedOnly((v) => !v)}
@@ -86,7 +80,7 @@ export default function ChannelsPage() {
                     : "border-stone-200 bg-white text-stone-600"
                 }`}
               >
-                {featuredOnly ? "المقترحة فقط ✓" : "عرض المقترحة فقط"}
+                {featuredOnly ? t("channels.featuredOnly") : t("channels.showFeaturedOnly")}
               </button>
             </label>
           </div>
@@ -94,7 +88,9 @@ export default function ChannelsPage() {
 
         <div className="mb-6 flex items-center justify-between">
           <span className="text-sm text-stone-500">
-            {loading ? "جاري التحميل..." : `${channels.length} قناة`}
+            {loading
+              ? t("channels.loading")
+              : t("common.channels", { count: channels.length })}
           </span>
         </div>
 
@@ -102,7 +98,7 @@ export default function ChannelsPage() {
           <div className="h-40 animate-pulse rounded-2xl bg-stone-100" />
         ) : channels.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-stone-200 py-16 text-center text-stone-500">
-            لا توجد قنوات مطابقة
+            {t("channels.noMatch")}
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

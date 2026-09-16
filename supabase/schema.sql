@@ -208,3 +208,16 @@ end;
 $$;
 
 grant execute on function public.set_channel_featured(text, boolean) to authenticated;
+
+-- Site settings (admin-managed, server reads via service role)
+create table if not exists public.site_settings (
+  key text primary key,
+  value jsonb not null default '[]'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.site_settings enable row level security;
+
+-- No direct client access — server uses service role key
+create policy "site_settings_no_client" on public.site_settings
+  for all using (false);

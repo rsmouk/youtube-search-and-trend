@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
+import { useI18n } from "@/components/I18nProvider";
 import {
   getAllSiteChannels,
   setChannelFeatured,
@@ -15,10 +16,12 @@ import { pageMain } from "@/lib/layout-classes";
 export default function AdminPage() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
+  const { t } = useI18n();
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "featured">("all");
   const [actionError, setActionError] = useState("");
+  const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -40,14 +43,28 @@ export default function AdminPage() {
   }, [isAdmin, filter]);
 
   const toggleFeatured = async (channelId: string, current: boolean) => {
+    if (togglingId) return;
+
     setActionError("");
-    const result = await setChannelFeatured(channelId, !current);
-    if (result.ok) {
-      load();
-    } else {
-      setActionError(
-        result.error ?? "فشل التحديث — نفّذ supabase/fix-rls.sql في Supabase"
+    const next = !current;
+    setTogglingId(channelId);
+
+    setChannels((prev) =>
+      prev.map((ch) =>
+        ch.channel_id === channelId ? { ...ch, featured: next } : ch
+      )
+    );
+
+    const result = await setChannelFeatured(channelId, next);
+    setTogglingId(null);
+
+    if (!result.ok) {
+      setChannels((prev) =>
+        prev.map((ch) =>
+          ch.channel_id === channelId ? { ...ch, featured: current } : ch
+        )
       );
+      setActionError(result.error ?? t("admin.updateFailed"));
     }
   };
 
@@ -67,12 +84,8 @@ export default function AdminPage() {
       <Header />
       <main className={pageMain}>
         <section className="mb-8">
-          <h1 className="text-3xl font-semibold text-stone-800">
-            لوحة الإدارة
-          </h1>
-          <p className="mt-2 text-stone-500">
-            اختر القنوات التي تظهر في الرئيسية كـ «مقترحة»
-          </p>
+          <h1 className="text-3xl font-semibold text-stone-800">{t("admin.title")}</h1>
+          <p className="mt-2 text-stone-500">{t("admin.subtitle")}</p>
         </section>
 
         {actionError && (
@@ -93,7 +106,7 @@ export default function AdminPage() {
                   : "border border-stone-200 bg-white text-stone-600"
               }`}
             >
-              {f === "all" ? "كل القنوات" : "المميزة فقط"}
+              {f === "all" ? t("admin.allChannels") : t("admin.featuredOnly")}
             </button>
           ))}
         </div>
@@ -115,25 +128,28 @@ export default function AdminPage() {
                   />
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-stone-800">
-                    {ch.title}
-                  </p>
+                  <p className="truncate font-medium text-stone-800">{ch.title}</p>
                   <p className="text-xs text-stone-400">
-                    {formatCount(ch.subscriber_count ?? "0")} مشترك •{" "}
-                    {ch.search_count} عملية بحث
+                    {formatCount(ch.subscriber_count ?? "0")} •{" "}
+                    {t("admin.searches", { count: ch.search_count })}
                     {ch.country ? ` • ${ch.country}` : ""}
                   </p>
                 </div>
                 <button
                   type="button"
+                  disabled={togglingId === ch.channel_id}
                   onClick={() => toggleFeatured(ch.channel_id, ch.featured)}
-                  className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium ${
+                  className={`shrink-0 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-60 ${
                     ch.featured
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
                   }`}
                 >
-                  {ch.featured ? "مميزة ✓" : "تعيين كمقترحة"}
+                  {togglingId === ch.channel_id
+                    ? "..."
+                    : ch.featured
+                      ? t("admin.featured")
+                      : t("admin.setFeatured")}
                 </button>
               </div>
             ))}

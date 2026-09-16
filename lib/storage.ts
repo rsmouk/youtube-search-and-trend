@@ -6,6 +6,9 @@ const API_KEYS_KEY = "youtube_api_keys";
 const SAVED_CHANNELS_KEY = "saved_channels";
 const SEARCH_HISTORY_KEY = "search_history";
 const MAX_SEARCH_HISTORY = 10;
+const SUGGESTED_LAYOUT_KEY = "suggested_layout";
+
+export type SuggestedLayout = "grid" | "row";
 
 export const SAVED_CHANNELS_CHANGED = "saved-channels-changed";
 export const SEARCH_HISTORY_CHANGED = "search-history-changed";
@@ -93,4 +96,18 @@ export function addRecentSearch(keyword: string): void {
   const updated = [trimmed, ...filtered].slice(0, MAX_SEARCH_HISTORY);
   localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(updated));
   notifySearchHistoryChange();
+}
+
+export function getSuggestedLayout(): SuggestedLayout {
+  if (typeof window === "undefined") return "grid";
+  try {
+    const raw = localStorage.getItem(SUGGESTED_LAYOUT_KEY);
+    return raw === "row" ? "row" : "grid";
+  } catch {
+    return "grid";
+  }
+}
+
+export function saveSuggestedLayout(layout: SuggestedLayout): void {
+  localStorage.setItem(SUGGESTED_LAYOUT_KEY, layout);
 }

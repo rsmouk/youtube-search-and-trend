@@ -4,13 +4,24 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import { useI18n } from "@/components/I18nProvider";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import UserMenu from "@/components/UserMenu";
+import NavIcon from "@/components/NavIcon";
 import { fetchSavedCount } from "@/lib/saved-service";
 import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
+
+type NavLink = {
+  href: string;
+  labelKey: string;
+  icon: "search" | "trending" | "channels" | "saved" | "settings" | "admin";
+  showCount?: boolean;
+};
 
 export default function Header() {
   const pathname = usePathname();
   const { user, isAdmin, loading } = useAuth();
+  const { t } = useI18n();
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
@@ -28,17 +39,30 @@ export default function Header() {
     };
   }, [user?.id]);
 
-  const links = [
-    { href: "/", label: "البحث" },
-    { href: "/trending", label: "الترند" },
-    { href: "/channels", label: "القنوات" },
-    { href: "/saved", label: "المحفوظات", showCount: true },
-    { href: "/settings", label: "الإعدادات" },
-    ...(isAdmin ? [{ href: "/admin", label: "الإدارة" }] : []),
+  const links: NavLink[] = [
+    { href: "/", labelKey: "nav.search", icon: "search" },
+    { href: "/trending", labelKey: "nav.trending", icon: "trending" },
+    { href: "/channels", labelKey: "nav.channels", icon: "channels" },
+    { href: "/saved", labelKey: "nav.saved", icon: "saved", showCount: true },
+    ...(isAdmin
+      ? [
+          { href: "/settings", labelKey: "nav.settings", icon: "settings" as const },
+          { href: "/admin", labelKey: "nav.admin", icon: "admin" as const },
+        ]
+      : []),
   ];
 
+  const linkClass = (active: boolean, mobile = false) =>
+    `flex shrink-0 items-center gap-1.5 rounded-xl transition-colors ${
+      mobile ? "snap-start px-3 py-2 text-xs" : "px-3 py-2 text-sm"
+    } ${
+      active
+        ? "bg-white text-stone-800 shadow-sm"
+        : "text-stone-500 hover:text-stone-700"
+    }`;
+
   return (
-    <header className="border-b border-stone-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-40">
+    <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/70 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <Link href="/" className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
@@ -52,8 +76,8 @@ export default function Header() {
             </svg>
           </span>
           <div>
-            <p className="text-sm font-semibold text-stone-800">قنوات يوتيوب</p>
-            <p className="text-xs text-stone-500">بحث حسب الكلمة</p>
+            <p className="text-sm font-semibold text-stone-800">{t("nav.appName")}</p>
+            <p className="text-xs text-stone-500">{t("nav.appTagline")}</p>
           </div>
         </Link>
 
@@ -65,13 +89,10 @@ export default function Header() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm transition-colors ${
-                    active
-                      ? "bg-white text-stone-800 shadow-sm"
-                      : "text-stone-500 hover:text-stone-700"
-                  }`}
+                  className={linkClass(active)}
                 >
-                  {link.label}
+                  <NavIcon name={link.icon} />
+                  {t(link.labelKey)}
                   {link.showCount && savedCount > 0 && (
                     <span
                       className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
@@ -88,17 +109,45 @@ export default function Header() {
             })}
           </nav>
 
+          <LanguageSwitcher compact />
           {!loading && !user && (
             <Link
               href="/login"
               className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
             >
-              دخول
+              {t("nav.login")}
             </Link>
           )}
           {!loading && user && <UserMenu />}
         </div>
       </div>
+
+      <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 pb-3 sm:hidden">
+        {links.map((link) => {
+          const active = pathname === link.href;
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={`${linkClass(active, true)} bg-stone-100/80`}
+            >
+              <NavIcon name={link.icon} className="h-3.5 w-3.5" />
+              {t(link.labelKey)}
+              {link.showCount && savedCount > 0 && (
+                <span
+                  className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
+                    active
+                      ? "bg-stone-800 text-white"
+                      : "bg-stone-200 text-stone-600"
+                  }`}
+                >
+                  {savedCount}
+                </span>
+              )}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }

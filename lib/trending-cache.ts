@@ -1,13 +1,9 @@
 "use client";
 
 import type { TrendingVideo, VideoCategory } from "./types";
-import {
-  getTrendingVideos,
-  getVideoCategories,
-} from "./youtube";
 
 const CACHE_PREFIX = "trend_cache_";
-const CACHE_TTL_MS = 3 * 60 * 60 * 1000; // 3 ساعات
+const CACHE_TTL_MS = 3 * 60 * 60 * 1000;
 
 interface CacheEntry<T> {
   data: T;
@@ -56,43 +52,52 @@ export function getCacheRemainingMs(key: string): number {
   }
 }
 
-export function formatCacheRemaining(ms: number): string {
+export function formatCacheRemaining(
+  ms: number,
+  t: (key: string, values?: Record<string, string | number>) => string
+): string {
   const hours = Math.floor(ms / (60 * 60 * 1000));
   const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
-  if (hours > 0) return `${hours} س ${minutes} د`;
-  return `${minutes} د`;
+  if (hours > 0) return t("common.hours", { h: hours, m: minutes });
+  return t("common.minutes", { m: minutes });
 }
 
 export async function getCachedVideoCategories(
-  regionCode: string,
-  apiKeys: string[],
-  referer?: string
-): Promise<{ data: VideoCategory[]; fromCache: boolean }> {
+  regionCode: string
+): Promise<{ data: VideoCategory[]; fromCache: boolean; error?: string }> {
   const key = categoriesKey(regionCode);
   const cached = readCache<VideoCategory[]>(key);
   if (cached) return { data: cached, fromCache: true };
 
-  const data = await getVideoCategories(regionCode, apiKeys, referer);
+  const res = await fetch(`/api/trending/categories?region=${encodeURIComponent(regionCode)}`);
+  const json = await res.json();
+  if (!res.ok) {
+    return { data: [], fromCache: false, error: json.error ?? "fetch_failed" };
+  }
+
+  const data: VideoCategory[] = json.categories ?? [];
   writeCache(key, data);
   return { data, fromCache: false };
 }
 
 export async function getCachedTrendingVideos(
   regionCode: string,
-  apiKeys: string[],
-  categoryId?: string,
-  referer?: string
-): Promise<{ data: TrendingVideo[]; fromCache: boolean }> {
+  categoryId?: string
+): Promise<{ data: TrendingVideo[]; fromCache: boolean; error?: string }> {
   const key = videosKey(regionCode, categoryId ?? "");
   const cached = readCache<TrendingVideo[]>(key);
   if (cached) return { data: cached, fromCache: true };
 
-  const data = await getTrendingVideos(
-    regionCode,
-    apiKeys,
-    categoryId,
-    referer
-  );
+  const params = new URLSearchParams({ region: regionCode });
+  if (categoryId) params.set("category", categoryId);
+
+  const res = await fetch(`/api/trending/videos?${params}`);
+  const json = await res.json();
+  if (!res.ok) {
+    return { data: [], fromCache: false, error: json.error ?? "fetch_failed" };
+  }
+
+  const data: TrendingVideo[] = json.videos ?? [];
   writeCache(key, data);
   return { data, fromCache: false };
 }

@@ -13,10 +13,14 @@ interface SearchableSelectProps {
   options: SelectOption[];
   disabled?: boolean;
   placeholder?: string;
+  menuMaxHeight?: number;
   onChange: (value: string) => void;
 }
 
-const selectStyles: StylesConfig<SelectOption, false> = {
+function getSelectStyles(
+  menuMaxHeight: number
+): StylesConfig<SelectOption, false> {
+  return {
   control: (base, state) => ({
     ...base,
     minHeight: 42,
@@ -36,7 +40,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menuList: (base) => ({
     ...base,
     padding: 4,
-    maxHeight: 220,
+    maxHeight: menuMaxHeight,
   }),
   option: (base, state) => ({
     ...base,
@@ -67,6 +71,7 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   }),
   indicatorSeparator: () => ({ display: "none" }),
 };
+}
 
 export default function SearchableSelect({
   label,
@@ -74,6 +79,7 @@ export default function SearchableSelect({
   options,
   disabled,
   placeholder = "اختر...",
+  menuMaxHeight = 220,
   onChange,
 }: SearchableSelectProps) {
   const selected =
@@ -94,7 +100,7 @@ export default function SearchableSelect({
         placeholder={placeholder}
         noOptionsMessage={() => "لا توجد نتائج"}
         onChange={(opt) => onChange(opt?.value ?? "")}
-        styles={selectStyles}
+        styles={getSelectStyles(menuMaxHeight)}
         classNames={{
           container: () => "text-sm",
         }}

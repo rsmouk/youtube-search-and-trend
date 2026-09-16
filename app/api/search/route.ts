@@ -1,3 +1,4 @@
+import { getServerApiKeys } from "@/lib/api-keys-server";
 import { DEFAULT_FILTERS, type SearchFilters } from "@/lib/filters";
 import { NextRequest, NextResponse } from "next/server";
 import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
@@ -18,22 +19,10 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const keyword = typeof body.keyword === "string" ? body.keyword : "";
-    const apiKeys = Array.isArray(body.apiKeys)
-      ? body.apiKeys.filter((k: unknown) => typeof k === "string")
-      : [];
-
-    const origin =
-      request.headers.get("origin") ??
-      request.headers.get("referer") ??
-      undefined;
+    const apiKeys = await getServerApiKeys();
 
     const filters = parseFilters(body.filters);
-    const result = await searchRecentChannels(
-      keyword,
-      apiKeys,
-      origin ?? undefined,
-      filters
-    );
+    const result = await searchRecentChannels(keyword, apiKeys, undefined, filters);
 
     return NextResponse.json({
       channels: result.channels,
@@ -47,9 +36,6 @@ export async function POST(request: NextRequest) {
         { status: error.status }
       );
     }
-    return NextResponse.json(
-      { error: "حدث خطأ غير متوقع" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Unexpected error" }, { status: 500 });
   }
 }

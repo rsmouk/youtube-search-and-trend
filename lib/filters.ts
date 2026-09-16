@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/i18n";
+
 export interface SearchFilters {
   regionCode: string;
   channelCountry: string;
@@ -14,51 +16,110 @@ export const DEFAULT_FILTERS: SearchFilters = {
 
 const FILTERS_KEY = "search_filters";
 
-export const PERIOD_OPTIONS = [
-  { value: 7, label: "7 أيام" },
-  { value: 30, label: "30 يوم" },
-  { value: 90, label: "90 يوم" },
-];
+export const COUNTRY_CODES = [
+  "",
+  "SA",
+  "EG",
+  "AE",
+  "KW",
+  "QA",
+  "BH",
+  "OM",
+  "JO",
+  "LB",
+  "SY",
+  "IQ",
+  "MA",
+  "DZ",
+  "TN",
+  "LY",
+  "SD",
+  "YE",
+  "PS",
+  "US",
+  "GB",
+  "DE",
+  "FR",
+  "TR",
+  "IN",
+  "ES",
+] as const;
 
-export const LANGUAGE_OPTIONS = [
-  { code: "", label: "كل اللغات" },
-  { code: "ar", label: "العربية" },
-  { code: "en", label: "English" },
-  { code: "fr", label: "Français" },
-  { code: "tr", label: "Türkçe" },
-];
+const COUNTRY_FLAGS: Record<string, string> = {
+  SA: "🇸🇦",
+  EG: "🇪🇬",
+  AE: "🇦🇪",
+  KW: "🇰🇼",
+  QA: "🇶🇦",
+  BH: "🇧🇭",
+  OM: "🇴🇲",
+  JO: "🇯🇴",
+  LB: "🇱🇧",
+  SY: "🇸🇾",
+  IQ: "🇮🇶",
+  MA: "🇲🇦",
+  DZ: "🇩🇿",
+  TN: "🇹🇳",
+  LY: "🇱🇾",
+  SD: "🇸🇩",
+  YE: "🇾🇪",
+  PS: "🇵🇸",
+  US: "🇺🇸",
+  GB: "🇬🇧",
+  DE: "🇩🇪",
+  FR: "🇫🇷",
+  TR: "🇹🇷",
+  IN: "🇮🇳",
+  ES: "🇪🇸",
+};
 
-export const COUNTRY_OPTIONS = [
-  { code: "", label: "الكل" },
-  { code: "SA", label: "🇸🇦 السعودية" },
-  { code: "EG", label: "🇪🇬 مصر" },
-  { code: "AE", label: "🇦🇪 الإمارات" },
-  { code: "KW", label: "🇰🇼 الكويت" },
-  { code: "QA", label: "🇶🇦 قطر" },
-  { code: "BH", label: "🇧🇭 البحرين" },
-  { code: "OM", label: "🇴🇲 عُمان" },
-  { code: "JO", label: "🇯🇴 الأردن" },
-  { code: "LB", label: "🇱🇧 لبنان" },
-  { code: "SY", label: "🇸🇾 سوريا" },
-  { code: "IQ", label: "🇮🇶 العراق" },
-  { code: "MA", label: "🇲🇦 المغرب" },
-  { code: "DZ", label: "🇩🇿 الجزائر" },
-  { code: "TN", label: "🇹🇳 تونس" },
-  { code: "LY", label: "🇱🇾 ليبيا" },
-  { code: "SD", label: "🇸🇩 السودان" },
-  { code: "YE", label: "🇾🇪 اليمن" },
-  { code: "PS", label: "🇵🇸 فلسطين" },
-  { code: "US", label: "🇺🇸 أمريكا" },
-  { code: "GB", label: "🇬🇧 بريطانيا" },
-  { code: "DE", label: "🇩🇪 ألمانيا" },
-  { code: "FR", label: "🇫🇷 فرنسا" },
-  { code: "TR", label: "🇹🇷 تركيا" },
-  { code: "IN", label: "🇮🇳 الهند" },
-];
+function regionDisplayName(code: string, locale: Locale): string {
+  if (!code) return "";
+  try {
+    const dn = new Intl.DisplayNames([locale], { type: "region" });
+    return dn.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
 
-export function getCountryLabel(code: string | undefined): string {
-  if (!code) return "غير محدد";
-  return COUNTRY_OPTIONS.find((c) => c.code === code)?.label ?? code;
+export function getCountryOptions(locale: Locale, allLabel: string) {
+  return COUNTRY_CODES.map((code) => ({
+    code,
+    label: code
+      ? `${COUNTRY_FLAGS[code] ?? ""} ${regionDisplayName(code, locale)}`.trim()
+      : allLabel,
+  }));
+}
+
+export function getPeriodOptions(t: (key: string) => string) {
+  return [
+    { value: 7, label: t("filters.days7") },
+    { value: 30, label: t("filters.days30") },
+    { value: 90, label: t("filters.days90") },
+  ];
+}
+
+export function getLanguageOptions(t: (key: string) => string) {
+  return [
+    { code: "", label: t("common.allLanguages") },
+    { code: "ar", label: "العربية" },
+    { code: "en", label: "English" },
+    { code: "fr", label: "Français" },
+    { code: "es", label: "Español" },
+    { code: "tr", label: "Türkçe" },
+  ];
+}
+
+export function getCountryLabel(
+  code: string | undefined,
+  locale: Locale,
+  unspecifiedLabel: string
+): string {
+  if (!code) return unspecifiedLabel;
+  const flag = COUNTRY_FLAGS[code] ?? "";
+  const name = regionDisplayName(code, locale);
+  return `${flag} ${name}`.trim();
 }
 
 export function getSavedFilters(): SearchFilters {
@@ -76,9 +137,17 @@ export function saveFilters(filters: SearchFilters): void {
   localStorage.setItem(FILTERS_KEY, JSON.stringify(filters));
 }
 
-export const TRENDING_COUNTRIES = COUNTRY_OPTIONS.filter((c) => c.code !== "");
+export function getTrendingRegionOptions(locale: Locale, allLabel: string) {
+  return getCountryOptions(locale, allLabel).filter((c) => c.code !== "");
+}
 
-const TRENDING_PREFS_KEY = "trending_prefs";
+export function getTrendingRegionLabel(
+  code: string,
+  locale: Locale,
+  unspecifiedLabel: string
+): string {
+  return getCountryLabel(code, locale, unspecifiedLabel);
+}
 
 export interface TrendingPrefs {
   regionCode: string;
@@ -89,6 +158,8 @@ export const DEFAULT_TRENDING_PREFS: TrendingPrefs = {
   regionCode: "SA",
   categoryId: "",
 };
+
+const TRENDING_PREFS_KEY = "trending_prefs";
 
 export function getTrendingPrefs(): TrendingPrefs {
   if (typeof window === "undefined") return DEFAULT_TRENDING_PREFS;
@@ -101,6 +172,10 @@ export function getTrendingPrefs(): TrendingPrefs {
   }
 }
 
-export function saveTrendingPrefs(prefs: TrendingPrefs): void {
-  localStorage.setItem(TRENDING_PREFS_KEY, JSON.stringify(prefs));
+export function saveTrendingPrefs(prefs: Partial<TrendingPrefs>): void {
+  const current = getTrendingPrefs();
+  localStorage.setItem(
+    TRENDING_PREFS_KEY,
+    JSON.stringify({ ...current, ...prefs })
+  );
 }

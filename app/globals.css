@@ -1,6 +1,10 @@
 @import "tailwindcss";
 
 @theme inline {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+html[dir="rtl"] {
   --font-sans: var(--font-noto-arabic), ui-sans-serif, system-ui, sans-serif;
 }
 
@@ -11,4 +15,14 @@
 
 body {
   font-family: var(--font-sans);
+}
+
+.nav-scroll {
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.nav-scroll::-webkit-scrollbar {
+  display: none;
 }

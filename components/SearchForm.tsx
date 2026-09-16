@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import SearchFiltersBar from "@/components/SearchFiltersBar";
+import { useI18n } from "@/components/I18nProvider";
 import type { SearchFilters } from "@/lib/filters";
-import {
-  getRecentSearches,
-  SEARCH_HISTORY_CHANGED,
-} from "@/lib/storage";
+import { getRecentSearches, SEARCH_HISTORY_CHANGED } from "@/lib/storage";
 
 interface SearchFormProps {
   keyword: string;
@@ -27,6 +25,7 @@ export default function SearchForm({
   onSubmit,
   onSelectRecent,
 }: SearchFormProps) {
+  const { t } = useI18n();
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
 
@@ -51,7 +50,7 @@ export default function SearchForm({
             type="text"
             value={keyword}
             onChange={(e) => onKeywordChange(e.target.value)}
-            placeholder="ابحث عن كلمة... مثل: برمجة، طبخ، تصميم"
+            placeholder={t("home.searchPlaceholder")}
             className="w-full rounded-2xl border border-stone-200 bg-white px-5 py-4 text-stone-800 shadow-sm outline-none transition-all placeholder:text-stone-400 focus:border-stone-300 focus:ring-4 focus:ring-stone-100"
             disabled={loading}
           />
@@ -77,7 +76,7 @@ export default function SearchForm({
           disabled={loading || !keyword.trim()}
           className="h-fit rounded-2xl bg-stone-800 px-8 py-4 text-sm font-medium text-white transition-all hover:bg-stone-700 disabled:cursor-not-allowed disabled:opacity-50 sm:shrink-0"
         >
-          {loading ? "جاري البحث..." : "بحث"}
+          {loading ? t("home.searching") : t("home.search")}
         </button>
       </div>
 
@@ -97,7 +96,7 @@ export default function SearchForm({
           >
             <path d="m6 9 6 6 6-6" />
           </svg>
-          {showFilters ? "إخفاء الفلاتر" : "إظهار الفلاتر"}
+          {showFilters ? t("home.hideFilters") : t("home.showFilters")}
         </button>
       </div>
 
@@ -109,9 +108,7 @@ export default function SearchForm({
         />
       )}
 
-      <p className="mt-3 text-center text-xs text-stone-400">
-        يعرض القنوات التي نشرت فيديوهات حديثة تحتوي على كلمتك
-      </p>
+      <p className="mt-3 text-center text-xs text-stone-400">{t("home.searchHint")}</p>
     </form>
   );
 }

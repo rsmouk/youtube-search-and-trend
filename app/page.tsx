@@ -8,15 +8,17 @@ import SearchForm from "@/components/SearchForm";
 import ChannelCard from "@/components/ChannelCard";
 import ChannelCardSkeleton from "@/components/ChannelCardSkeleton";
 import SuggestedChannels from "@/components/SuggestedChannels";
+import { useI18n } from "@/components/I18nProvider";
 import { upsertChannelsFromSearch } from "@/lib/channels-db";
-import { addRecentSearch, getApiKeys } from "@/lib/storage";
-import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
+import { addRecentSearch } from "@/lib/storage";
+import { translateYouTubeError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 
 const SKELETON_COUNT = 6;
 
 export default function HomePage() {
+  const { t } = useI18n();
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -46,26 +48,31 @@ export default function HomePage() {
     addRecentSearch(trimmed);
 
     try {
-      const apiKeys = getApiKeys();
-      const result = await searchRecentChannels(trimmed, apiKeys, undefined, filters);
+      const res = await fetch("/api/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ keyword: trimmed, filters }),
+      });
 
-      setChannels(result.channels);
-      upsertChannelsFromSearch(result.channels).catch(() => {});
+      const data = await res.json();
 
-      if (result.channels.length === 0) {
+      if (!res.ok) {
+        setChannels([]);
+        setError(translateYouTubeError(data.error ?? "unexpected", t));
+        return;
+      }
+
+      setChannels(data.channels ?? []);
+      upsertChannelsFromSearch(data.channels ?? []).catch(() => {});
+
+      if ((data.channels ?? []).length === 0) {
         setError(
-          filters.channelCountry
-            ? "لا توجد قنوات مطابقة للفلاتر المحددة. جرّب تغيير الدولة أو المنطقة."
-            : "لم يتم العثور على قنوات نشرت مؤخراً بهذه الكلمة"
+          filters.channelCountry ? t("home.noResultsFiltered") : t("home.noResults")
         );
       }
-    } catch (err) {
+    } catch {
       setChannels([]);
-      if (err instanceof YouTubeApiError) {
-        setError(err.message);
-      } else {
-        setError("تعذر الاتصال بـ YouTube API");
-      }
+      setError(t("errors.connectionFailed"));
     } finally {
       setLoading(false);
     }
@@ -84,24 +91,24 @@ export default function HomePage() {
       <main className={pageMain}>
         <section className="mb-10 text-center">
           <h1 className="text-3xl font-semibold tracking-tight text-stone-800 sm:text-4xl">
-            اكتشف قنوات يوتيوب
+            {t("home.title")}
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-stone-500">
-            ابحث بكلمة مفتاحية واعثر على القنوات التي نشرت محتوى حديثاً
-          </p>
+          <p className="mx-auto mt-3 max-w-xl text-stone-500">{t("home.subtitle")}</p>
         </section>
 
-        {!hasSearched && <SuggestedChannels />}
+        <div className="mb-10">
+          <SearchForm
+            keyword={keyword}
+            loading={loading}
+            filters={filters}
+            onKeywordChange={setKeyword}
+            onFiltersChange={handleFiltersChange}
+            onSubmit={handleSearch}
+            onSelectRecent={runSearch}
+          />
+        </div>
 
-        <SearchForm
-          keyword={keyword}
-          loading={loading}
-          filters={filters}
-          onKeywordChange={setKeyword}
-          onFiltersChange={handleFiltersChange}
-          onSubmit={handleSearch}
-          onSelectRecent={runSearch}
-        />
+        {!hasSearched && <SuggestedChannels />}
 
         {error && !loading && (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 whitespace-pre-line">
@@ -113,11 +120,11 @@ export default function HomePage() {
           <section className="mt-12">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-medium text-stone-700">
-                نتائج &quot;{searchedKeyword}&quot;
+                {t("home.resultsFor", { keyword: searchedKeyword })}
               </h2>
               {!loading && channels.length > 0 && (
                 <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                  {channels.length} قناة
+                  {t("common.channels", { count: channels.length })}
                 </span>
               )}
             </div>

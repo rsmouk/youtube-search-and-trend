@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/components/Header";
 import { useAuth } from "@/components/AuthProvider";
+import { useI18n } from "@/components/I18nProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
 
 export default function AccountPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
+  const { t } = useI18n();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,33 +30,31 @@ export default function AccountPage() {
     setMessage("");
 
     if (password.length < 6) {
-      setError("كلمة المرور 6 أحرف على الأقل");
+      setError(t("account.passwordTooShort"));
       return;
     }
     if (password !== confirm) {
-      setError("كلمتا المرور غير متطابقتين");
+      setError(t("account.passwordMismatch"));
       return;
     }
     if (!isSupabaseConfigured()) {
-      setError("Supabase غير مُعد");
+      setError(t("account.supabaseNotConfigured"));
       return;
     }
 
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: updateError } = await supabase.auth.updateUser({
-        password,
-      });
+      const { error: updateError } = await supabase.auth.updateUser({ password });
       if (updateError) {
         setError(updateError.message);
       } else {
-        setMessage("تم تحديث كلمة المرور بنجاح");
+        setMessage(t("account.passwordUpdated"));
         setPassword("");
         setConfirm("");
       }
     } catch {
-      setError("فشل التحديث");
+      setError(t("account.updateFailed"));
     } finally {
       setLoading(false);
     }
@@ -88,20 +88,18 @@ export default function AccountPage() {
               </svg>
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-stone-800">حسابي</h1>
+              <h1 className="text-xl font-semibold text-stone-800">{t("account.title")}</h1>
               <p className="text-sm text-stone-500">{user.email}</p>
             </div>
           </div>
 
           <form onSubmit={handleUpdatePassword} className="space-y-3">
-            <p className="text-sm font-medium text-stone-700">
-              تغيير كلمة المرور
-            </p>
+            <p className="text-sm font-medium text-stone-700">{t("account.changePassword")}</p>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="كلمة المرور الجديدة"
+              placeholder={t("account.newPassword")}
               minLength={6}
               className="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100"
             />
@@ -109,7 +107,7 @@ export default function AccountPage() {
               type="password"
               value={confirm}
               onChange={(e) => setConfirm(e.target.value)}
-              placeholder="تأكيد كلمة المرور"
+              placeholder={t("account.confirmPassword")}
               minLength={6}
               className="w-full rounded-xl border border-stone-200 px-4 py-3 text-sm outline-none focus:border-stone-300 focus:ring-4 focus:ring-stone-100"
             />
@@ -118,14 +116,12 @@ export default function AccountPage() {
               disabled={loading}
               className="w-full rounded-xl bg-stone-800 py-3 text-sm font-medium text-white hover:bg-stone-700 disabled:opacity-50"
             >
-              {loading ? "جاري الحفظ..." : "حفظ كلمة المرور"}
+              {loading ? t("account.saving") : t("account.savePassword")}
             </button>
           </form>
 
           {error && (
-            <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">
-              {error}
-            </p>
+            <p className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>
           )}
           {message && (
             <p className="mt-4 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
