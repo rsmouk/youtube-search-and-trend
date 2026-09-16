@@ -7,6 +7,7 @@ export const en = {
     settings: "Settings",
     admin: "Admin",
     login: "Sign in",
+    back: "Back",
     appName: "YouTube Channels",
     appTagline: "Search by keyword",
   },

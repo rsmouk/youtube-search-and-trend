@@ -9,6 +9,7 @@ export const ar: TranslationDict = {
     settings: "الإعدادات",
     admin: "الإدارة",
     login: "دخول",
+    back: "رجوع",
     appName: "قنوات يوتيوب",
     appTagline: "بحث حسب الكلمة",
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
@@ -20,11 +20,13 @@ type NavLink = {
 
 export default function Header() {
   const pathname = usePathname();
+  const router = useRouter();
   const pathWithoutLocale = stripLocale(pathname);
   const lp = useLocalePath();
   const { user, isAdmin, loading } = useAuth();
   const { t } = useI18n();
   const [likedCount, setLikedCount] = useState(0);
+  const showBack = pathWithoutLocale.startsWith("/channel/");
 
   useEffect(() => {
     const updateCount = async () => {
@@ -65,24 +67,56 @@ export default function Header() {
       ? pathWithoutLocale === "/"
       : pathWithoutLocale === href || pathWithoutLocale.startsWith(`${href}/`);
 
-  return (
-    <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/70 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href={lp("/")} className="flex items-center gap-2">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="h-5 w-5"
-            >
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-            </svg>
-          </span>
-          <p className="text-sm font-semibold text-stone-800">{t("nav.appName")}</p>
-        </Link>
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+      return;
+    }
+    router.push(lp("/"));
+  };
 
-        <div className="flex items-center gap-2">
+  return (
+    <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 sm:bg-white/70 sm:backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
+          {showBack && (
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label={t("nav.back")}
+              title={t("nav.back")}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 transition-colors hover:bg-stone-50 hover:text-stone-800"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="h-5 w-5 rtl:rotate-180"
+              >
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+          <Link href={lp("/")} className="flex min-w-0 items-center gap-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="h-5 w-5"
+              >
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+              </svg>
+            </span>
+            <p className="truncate text-sm font-semibold text-stone-800">
+              {t("nav.appName")}
+            </p>
+          </Link>
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
           <nav className="hidden items-center gap-1 rounded-2xl bg-stone-100/80 p-1 sm:flex">
             {links.map((link) => {
               const active = isActive(link.href);
@@ -132,7 +166,7 @@ export default function Header() {
         </div>
       </div>
 
-      <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto pb-3 pe-4 ps-6 sm:hidden">
+      <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto overflow-y-hidden pb-3 pe-4 ps-6 sm:hidden">
         <span className="w-1 shrink-0" aria-hidden />
         {links.map((link) => {
           const active = isActive(link.href);

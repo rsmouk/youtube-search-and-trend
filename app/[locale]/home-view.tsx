@@ -12,6 +12,10 @@ import SuggestedChannels from "@/components/SuggestedChannels";
 import { useI18n } from "@/components/I18nProvider";
 import { upsertChannelsFromSearch } from "@/lib/channels-db";
 import { buildSearchCacheKey } from "@/lib/search-cache";
+import {
+  loadHomeSearchSession,
+  saveHomeSearchSession,
+} from "@/lib/search-session";
 import { addRecentSearch } from "@/lib/storage";
 import { useCardLayout } from "@/lib/use-card-layout";
 import { translateYouTubeError } from "@/lib/youtube-errors";
@@ -31,17 +35,48 @@ export default function HomePage() {
   const [searchedKeyword, setSearchedKeyword] = useState("");
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [hasSearched, setHasSearched] = useState(false);
-  const [fromCache, setFromCache] = useState(false);
   const lastSearchKeyRef = useRef("");
   const loadingRef = useRef(false);
 
   useEffect(() => {
-    setFilters(getSavedFilters());
+    const savedFilters = getSavedFilters();
+    const session = loadHomeSearchSession();
+
+    if (session?.hasSearched) {
+      setKeyword(session.keyword || session.searchedKeyword);
+      setSearchedKeyword(session.searchedKeyword);
+      setChannels(session.channels);
+      setFilters(session.filters ?? savedFilters);
+      setHasSearched(true);
+      lastSearchKeyRef.current = session.searchKey ?? "";
+    } else {
+      setFilters(savedFilters);
+    }
   }, []);
 
   const handleFiltersChange = (next: SearchFilters) => {
     setFilters(next);
     saveFilters(next);
+  };
+
+  const persistSession = (
+    next: Partial<{
+      keyword: string;
+      searchedKeyword: string;
+      channels: Channel[];
+      filters: SearchFilters;
+      hasSearched: boolean;
+      searchKey: string;
+    }>
+  ) => {
+    saveHomeSearchSession({
+      keyword: next.keyword ?? keyword,
+      searchedKeyword: next.searchedKeyword ?? searchedKeyword,
+      channels: next.channels ?? channels,
+      filters: next.filters ?? filters,
+      hasSearched: next.hasSearched ?? hasSearched,
+      searchKey: next.searchKey ?? lastSearchKeyRef.current,
+    });
   };
 
   const runSearch = async (searchTerm: string) => {
@@ -67,7 +102,6 @@ export default function HomePage() {
     setKeyword(trimmed);
     setLoading(true);
     setError("");
-    setFromCache(false);
     setHasSearched(true);
     setSearchedKeyword(trimmed);
     addRecentSearch(trimmed);
@@ -83,27 +117,46 @@ export default function HomePage() {
 
       if (!res.ok) {
         setChannels([]);
-        setFromCache(false);
         lastSearchKeyRef.current = "";
         setError(translateYouTubeError(data.error ?? "unexpected", t));
+        persistSession({
+          keyword: trimmed,
+          searchedKeyword: trimmed,
+          channels: [],
+          hasSearched: true,
+          searchKey: "",
+        });
         return;
       }
 
+      const nextChannels = data.channels ?? [];
       lastSearchKeyRef.current = searchKey;
-      setChannels(data.channels ?? []);
-      setFromCache(Boolean(data.fromCache));
-      upsertChannelsFromSearch(data.channels ?? []).catch(() => {});
+      setChannels(nextChannels);
+      upsertChannelsFromSearch(nextChannels).catch(() => {});
+      persistSession({
+        keyword: trimmed,
+        searchedKeyword: trimmed,
+        channels: nextChannels,
+        hasSearched: true,
+        searchKey,
+      });
 
-      if ((data.channels ?? []).length === 0) {
+      if (nextChannels.length === 0) {
         setError(
           filters.channelCountry ? t("home.noResultsFiltered") : t("home.noResults")
         );
       }
     } catch {
       setChannels([]);
-      setFromCache(false);
       lastSearchKeyRef.current = "";
       setError(t("errors.connectionFailed"));
+      persistSession({
+        keyword: trimmed,
+        searchedKeyword: trimmed,
+        channels: [],
+        hasSearched: true,
+        searchKey: "",
+      });
     } finally {
       loadingRef.current = false;
       setLoading(false);
@@ -152,19 +205,14 @@ export default function HomePage() {
         {showResults && (
           <section className="mt-12">
             <div className="mb-6 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 flex-col gap-1">
-                <div className="flex min-w-0 items-center gap-3">
-                  <h2 className="truncate text-lg font-medium text-stone-700">
-                    {t("home.resultsFor", { keyword: searchedKeyword })}
-                  </h2>
-                  {!loading && channels.length > 0 && (
-                    <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                      {t("common.channels", { count: channels.length })}
-                    </span>
-                  )}
-                </div>
-                {!loading && fromCache && (
-                  <p className="text-xs text-stone-400">{t("home.cachedHint")}</p>
+              <div className="flex min-w-0 items-center gap-3">
+                <h2 className="truncate text-lg font-medium text-stone-700">
+                  {t("home.resultsFor", { keyword: searchedKeyword })}
+                </h2>
+                {!loading && channels.length > 0 && (
+                  <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                    {t("common.channels", { count: channels.length })}
+                  </span>
                 )}
               </div>
               <LayoutToggle layout={layout} onChange={setLayout} />

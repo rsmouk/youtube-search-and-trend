@@ -9,6 +9,7 @@ export const es: TranslationDict = {
     settings: "Ajustes",
     admin: "Admin",
     login: "Entrar",
+    back: "Volver",
     appName: "Canales de YouTube",
     appTagline: "Buscar por palabra clave",
   },
