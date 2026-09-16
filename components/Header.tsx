@@ -4,12 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
+import UserMenu from "@/components/UserMenu";
 import { fetchSavedCount } from "@/lib/saved-service";
 import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
 
 export default function Header() {
   const pathname = usePathname();
-  const { user, isAdmin, signOut, loading } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
@@ -87,24 +88,15 @@ export default function Header() {
             })}
           </nav>
 
-          {!loading && (
-            user ? (
-              <button
-                type="button"
-                onClick={() => signOut()}
-                className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-600 hover:bg-stone-50"
-              >
-                خروج
-              </button>
-            ) : (
-              <Link
-                href="/login"
-                className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
-              >
-                دخول
-              </Link>
-            )
+          {!loading && !user && (
+            <Link
+              href="/login"
+              className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
+            >
+              دخول
+            </Link>
           )}
+          {!loading && user && <UserMenu />}
         </div>
       </div>
     </header>
