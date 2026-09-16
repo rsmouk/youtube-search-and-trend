@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "featured">("all");
+  const [actionError, setActionError] = useState("");
 
   const load = async () => {
     setLoading(true);
@@ -39,8 +40,15 @@ export default function AdminPage() {
   }, [isAdmin, filter]);
 
   const toggleFeatured = async (channelId: string, current: boolean) => {
-    const ok = await setChannelFeatured(channelId, !current);
-    if (ok) load();
+    setActionError("");
+    const result = await setChannelFeatured(channelId, !current);
+    if (result.ok) {
+      load();
+    } else {
+      setActionError(
+        result.error ?? "فشل التحديث — نفّذ supabase/fix-rls.sql في Supabase"
+      );
+    }
   };
 
   if (authLoading || !isAdmin) {
@@ -66,6 +74,12 @@ export default function AdminPage() {
             اختر القنوات التي تظهر في الرئيسية كـ «مقترحة»
           </p>
         </section>
+
+        {actionError && (
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
 
         <div className="mb-6 flex gap-2">
           {(["all", "featured"] as const).map((f) => (

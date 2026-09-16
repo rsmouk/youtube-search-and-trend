@@ -79,7 +79,8 @@ create policy "site_channels_read_all" on public.site_channels
   for select using (true);
 
 create policy "site_channels_admin_update" on public.site_channels
-  for update using (public.is_admin());
+  for update using (public.is_admin())
+  with check (public.is_admin());
 
 -- User saved channels
 create table if not exists public.user_saved_channels (
@@ -111,6 +112,10 @@ create policy "saved_insert_own" on public.user_saved_channels
 
 create policy "saved_delete_own" on public.user_saved_channels
   for delete using (auth.uid() = user_id);
+
+create policy "saved_update_own" on public.user_saved_channels
+  for update using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
 
 create policy "saved_admin_read" on public.user_saved_channels
   for select using (public.is_admin());
@@ -180,3 +185,26 @@ end;
 $$;
 
 grant execute on function public.upsert_site_channels(jsonb) to authenticated, anon;
+
+-- تعيين قناة كمقترحة (أدمن فقط)
+create or replace function public.set_channel_featured(
+  p_channel_id text,
+  p_featured boolean
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'admin only';
+  end if;
+
+  update public.site_channels
+  set featured = p_featured
+  where channel_id = p_channel_id;
+end;
+$$;
+
+grant execute on function public.set_channel_featured(text, boolean) to authenticated;

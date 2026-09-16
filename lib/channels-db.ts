@@ -149,14 +149,29 @@ export async function getAllSiteChannels(
 export async function setChannelFeatured(
   channelId: string,
   featured: boolean
-): Promise<boolean> {
-  if (!isSupabaseConfigured()) return false;
+): Promise<{ ok: boolean; error?: string }> {
+  if (!isSupabaseConfigured()) {
+    return { ok: false, error: "Supabase غير مُعد" };
+  }
   const supabase = createClient();
+
+  const { error: rpcError } = await supabase.rpc("set_channel_featured", {
+    p_channel_id: channelId,
+    p_featured: featured,
+  });
+
+  if (!rpcError) return { ok: true };
+
   const { error } = await supabase
     .from("site_channels")
     .update({ featured })
     .eq("channel_id", channelId);
-  return !error;
+
+  if (error) {
+    console.error("setChannelFeatured:", rpcError ?? error);
+    return { ok: false, error: error.message };
+  }
+  return { ok: true };
 }
 
 export async function getUserSavedChannels(
