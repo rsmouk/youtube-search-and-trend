@@ -6,10 +6,14 @@ import { DEFAULT_FILTERS, getSavedFilters, saveFilters } from "@/lib/filters";
 import Header from "@/components/Header";
 import SearchForm from "@/components/SearchForm";
 import ChannelCard from "@/components/ChannelCard";
-import ChannelDetailsModal from "@/components/ChannelDetailsModal";
+import ChannelCardSkeleton from "@/components/ChannelCardSkeleton";
+import SuggestedChannels from "@/components/SuggestedChannels";
+import { upsertChannelsFromSearch } from "@/lib/channels-db";
 import { addRecentSearch, getApiKeys } from "@/lib/storage";
 import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
 import type { Channel } from "@/lib/types";
+
+const SKELETON_COUNT = 6;
 
 export default function HomePage() {
   const [keyword, setKeyword] = useState("");
@@ -17,8 +21,8 @@ export default function HomePage() {
   const [error, setError] = useState("");
   const [channels, setChannels] = useState<Channel[]>([]);
   const [searchedKeyword, setSearchedKeyword] = useState("");
-  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
+  const [hasSearched, setHasSearched] = useState(false);
 
   useEffect(() => {
     setFilters(getSavedFilters());
@@ -36,7 +40,8 @@ export default function HomePage() {
     setKeyword(trimmed);
     setLoading(true);
     setError("");
-    setChannels([]);
+    setHasSearched(true);
+    setSearchedKeyword(trimmed);
     addRecentSearch(trimmed);
 
     try {
@@ -44,7 +49,7 @@ export default function HomePage() {
       const result = await searchRecentChannels(trimmed, apiKeys, undefined, filters);
 
       setChannels(result.channels);
-      setSearchedKeyword(trimmed);
+      upsertChannelsFromSearch(result.channels).catch(() => {});
 
       if (result.channels.length === 0) {
         setError(
@@ -54,6 +59,7 @@ export default function HomePage() {
         );
       }
     } catch (err) {
+      setChannels([]);
       if (err instanceof YouTubeApiError) {
         setError(err.message);
       } else {
@@ -69,6 +75,8 @@ export default function HomePage() {
     runSearch(keyword);
   };
 
+  const showResults = hasSearched && (loading || channels.length > 0);
+
   return (
     <>
       <Header />
@@ -82,6 +90,8 @@ export default function HomePage() {
           </p>
         </section>
 
+        {!hasSearched && <SuggestedChannels />}
+
         <SearchForm
           keyword={keyword}
           loading={loading}
@@ -92,47 +102,41 @@ export default function HomePage() {
           onSelectRecent={runSearch}
         />
 
-        {error && (
+        {error && !loading && (
           <div className="mx-auto mt-8 max-w-2xl rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 whitespace-pre-line">
             {error}
           </div>
         )}
 
-        {channels.length > 0 && (
+        {showResults && (
           <section className="mt-12">
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-lg font-medium text-stone-700">
                 نتائج &quot;{searchedKeyword}&quot;
               </h2>
-              <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                {channels.length} قناة
-              </span>
+              {!loading && channels.length > 0 && (
+                <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                  {channels.length} قناة
+                </span>
+              )}
             </div>
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {channels.map((channel) => (
-                <ChannelCard
-                  key={channel.id}
-                  channel={channel}
-                  onDetails={setSelectedChannel}
-                />
-              ))}
-            </div>
+            {loading ? (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                  <ChannelCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {channels.map((channel) => (
+                  <ChannelCard key={channel.id} channel={channel} />
+                ))}
+              </div>
+            )}
           </section>
         )}
-
-        {loading && (
-          <div className="mt-16 flex flex-col items-center gap-3 text-stone-400">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-stone-200 border-t-stone-500" />
-            <p className="text-sm">جاري جلب القنوات...</p>
-          </div>
-        )}
       </main>
-
-      <ChannelDetailsModal
-        channel={selectedChannel}
-        onClose={() => setSelectedChannel(null)}
-      />
     </>
   );
 }

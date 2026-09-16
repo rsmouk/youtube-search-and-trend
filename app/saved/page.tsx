@@ -1,26 +1,31 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import Header from "@/components/Header";
 import ChannelCard from "@/components/ChannelCard";
-import ChannelDetailsModal from "@/components/ChannelDetailsModal";
+import { useAuth } from "@/components/AuthProvider";
 import { savedToChannel } from "@/lib/channel-utils";
-import { getSavedChannels } from "@/lib/storage";
-import type { Channel, SavedChannel } from "@/lib/types";
+import { fetchSavedChannels } from "@/lib/saved-service";
+import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
+import type { SavedChannel } from "@/lib/types";
 
 export default function SavedPage() {
+  const { user } = useAuth();
   const [channels, setChannels] = useState<SavedChannel[]>([]);
   const [mounted, setMounted] = useState(false);
-  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
 
-  const loadSaved = () => {
-    setChannels(getSavedChannels());
+  const loadSaved = async () => {
+    setChannels(await fetchSavedChannels(user?.id));
   };
 
   useEffect(() => {
-    loadSaved();
-    setMounted(true);
-  }, []);
+    loadSaved().then(() => setMounted(true));
+
+    const refresh = () => loadSaved();
+    window.addEventListener(SAVED_CHANNELS_CHANGED, refresh);
+    return () => window.removeEventListener(SAVED_CHANNELS_CHANGED, refresh);
+  }, [user?.id]);
 
   if (!mounted) {
     return (
@@ -40,8 +45,18 @@ export default function SavedPage() {
         <section className="mb-8">
           <h1 className="text-3xl font-semibold text-stone-800">المحفوظات</h1>
           <p className="mt-2 text-stone-500">
-            القنوات التي حفظتها محلياً على جهازك
+            {user
+              ? "قنواتك محفوظة في حسابك"
+              : "قنواتك محفوظة محلياً — سجّل الدخول للمزامنة"}
           </p>
+          {!user && (
+            <Link
+              href="/login"
+              className="mt-2 inline-block text-sm text-stone-600 underline hover:text-stone-800"
+            >
+              تسجيل الدخول
+            </Link>
+          )}
         </section>
 
         {channels.length === 0 ? (
@@ -66,26 +81,17 @@ export default function SavedPage() {
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {channels.map((saved) => {
-                const channel = savedToChannel(saved);
-                return (
-                  <ChannelCard
-                    key={saved.id}
-                    channel={channel}
-                    onDetails={setSelectedChannel}
-                    onSavedChange={loadSaved}
-                  />
-                );
-              })}
+              {channels.map((saved) => (
+                <ChannelCard
+                  key={saved.id}
+                  channel={savedToChannel(saved)}
+                  onSavedChange={loadSaved}
+                />
+              ))}
             </div>
           </>
         )}
       </main>
-
-      <ChannelDetailsModal
-        channel={selectedChannel}
-        onClose={() => setSelectedChannel(null)}
-      />
     </>
   );
 }

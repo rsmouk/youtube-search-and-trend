@@ -1,0 +1,316 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
+import Link from "next/link";
+import Header from "@/components/Header";
+import RssVideoCard from "@/components/RssVideoCard";
+import VideoPlayerModal from "@/components/VideoPlayerModal";
+import { useAuth } from "@/components/AuthProvider";
+import { getCachedChannel } from "@/lib/channel-cache";
+import { getSiteChannelById, siteRowToChannel } from "@/lib/channels-db";
+import { channelToSaved } from "@/lib/channel-utils";
+import { formatCount, formatDate, getChannelUrl } from "@/lib/format";
+import { getCountryLabel } from "@/lib/filters";
+import { shareChannelPage } from "@/lib/share";
+import type { RssVideo } from "@/lib/youtube-rss";
+import {
+  checkChannelSaved,
+  removeChannelForUser,
+  saveChannelForUser,
+} from "@/lib/saved-service";
+import type { Channel, TrendingVideo } from "@/lib/types";
+
+export default function ChannelPage() {
+  const params = useParams();
+  const channelId = params.id as string;
+  const { user } = useAuth();
+  const [channel, setChannel] = useState<Channel | null>(null);
+  const [videos, setVideos] = useState<RssVideo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [videosLoading, setVideosLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [shareMsg, setShareMsg] = useState("");
+  const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(
+    null
+  );
+
+  useEffect(() => {
+    Promise.all([
+      getSiteChannelById(channelId),
+      fetch(`/api/channel/${channelId}/videos`).then((r) => r.json()),
+    ]).then(([row, rssData]) => {
+      const cached = getCachedChannel(channelId);
+      if (cached) {
+        setChannel(cached);
+      } else if (row) {
+        setChannel(siteRowToChannel(row));
+      } else if (rssData.channelName) {
+        setChannel({
+          id: channelId,
+          snippet: {
+            title: rssData.channelName,
+            description: "",
+            publishedAt: new Date().toISOString(),
+            thumbnails: {},
+          },
+          statistics: {
+            viewCount: "0",
+            subscriberCount: "0",
+            videoCount: "0",
+          },
+        });
+      } else {
+        setNotFound(true);
+      }
+      setVideos(rssData.videos ?? []);
+      setLoading(false);
+      setVideosLoading(false);
+    });
+  }, [channelId]);
+
+  useEffect(() => {
+    checkChannelSaved(channelId, user?.id).then(setSaved);
+  }, [channelId, user?.id]);
+
+  const thumbnail =
+    channel?.snippet.thumbnails.medium?.url ??
+    channel?.snippet.thumbnails.default?.url ??
+    "";
+
+  const toggleSave = async () => {
+    if (!channel) return;
+    if (saved) {
+      await removeChannelForUser(channelId, user?.id);
+      setSaved(false);
+    } else {
+      await saveChannelForUser(
+        channelToSaved(channel, thumbnail),
+        user?.id
+      );
+      setSaved(true);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!channel) return;
+    try {
+      const result = await shareChannelPage(channelId, channel.snippet.title);
+      setShareMsg(result === "shared" ? "تمت المشاركة" : "تم نسخ الرابط");
+      setTimeout(() => setShareMsg(""), 2000);
+    } catch {
+      /* cancelled */
+    }
+  };
+
+  const playRssVideo = (video: RssVideo) => {
+    setSelectedVideo({
+      id: video.id,
+      title: video.title,
+      description: "",
+      channelId,
+      channelTitle: channel?.snippet.title ?? "",
+      publishedAt: video.publishedAt,
+      thumbnail: video.thumbnail,
+      viewCount: "0",
+    });
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <main className="mx-auto max-w-3xl flex-1 px-4 py-10">
+          <div className="h-60 animate-pulse rounded-2xl bg-stone-100" />
+        </main>
+      </>
+    );
+  }
+
+  if (notFound && !channel) {
+    return (
+      <>
+        <Header />
+        <main className="mx-auto max-w-3xl flex-1 px-4 py-10 text-center">
+          <p className="text-stone-500">القناة غير موجودة</p>
+          <Link href="/" className="mt-4 inline-block text-sm underline">
+            العودة للبحث
+          </Link>
+        </main>
+      </>
+    );
+  }
+
+  if (!channel) return null;
+
+  return (
+    <>
+      <Header />
+      <main className="mx-auto max-w-3xl flex-1 px-4 py-10 sm:px-6">
+        <div className="rounded-3xl border border-stone-200/80 bg-white p-6 shadow-sm">
+          <div className="flex items-start gap-4">
+            <img
+              src={thumbnail}
+              alt={channel.snippet.title}
+              className="h-20 w-20 rounded-full border border-stone-100 object-cover"
+            />
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl font-semibold text-stone-800">
+                {channel.snippet.title}
+              </h1>
+              {channel.snippet.customUrl && (
+                <p className="mt-1 text-sm text-stone-500">
+                  @{channel.snippet.customUrl.replace("@", "")}
+                </p>
+              )}
+            </div>
+            <div className="relative flex shrink-0 gap-2">
+              {shareMsg && (
+                <span className="absolute -top-8 left-0 rounded-lg bg-stone-800 px-2 py-1 text-[10px] whitespace-nowrap text-white">
+                  {shareMsg}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleShare}
+                title="مشاركة"
+                aria-label="مشاركة"
+                className="flex h-10 w-10 items-center justify-center rounded-xl border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                  <polyline points="16 6 12 2 8 6" />
+                  <line x1="12" x2="12" y1="2" y2="15" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={toggleSave}
+                title={saved ? "محفوظة" : "حفظ"}
+                aria-label="حفظ"
+                className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                  saved
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "border border-stone-200 bg-white text-stone-600 hover:bg-stone-50"
+                }`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill={saved ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="h-4 w-4"
+                >
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <StatBox
+              label="المشتركون"
+              value={
+                channel.statistics.hiddenSubscriberCount
+                  ? "مخفيون"
+                  : formatCount(channel.statistics.subscriberCount)
+              }
+            />
+            <StatBox
+              label="المشاهدات"
+              value={formatCount(channel.statistics.viewCount)}
+            />
+            <StatBox
+              label="الفيديوهات"
+              value={formatCount(channel.statistics.videoCount)}
+            />
+          </div>
+
+          <div className="mt-4 space-y-2 text-sm text-stone-600">
+            {channel.snippet.country && (
+              <p>
+                <span className="text-stone-400">البلد: </span>
+                {getCountryLabel(channel.snippet.country)}
+              </p>
+            )}
+            <p>
+              <span className="text-stone-400">تاريخ الإضافة: </span>
+              {formatDate(channel.snippet.publishedAt)}
+            </p>
+          </div>
+
+          {channel.snippet.description && (
+            <p className="mt-4 max-h-32 overflow-y-auto whitespace-pre-wrap rounded-2xl bg-stone-50 p-4 text-sm leading-relaxed text-stone-600">
+              {channel.snippet.description.slice(0, 600)}
+              {channel.snippet.description.length > 600 ? "..." : ""}
+            </p>
+          )}
+
+          <a
+            href={getChannelUrl(channel)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-5 flex w-full items-center justify-center rounded-2xl bg-stone-800 py-3 text-sm font-medium text-white hover:bg-stone-700"
+          >
+            زيارة القناة على YouTube
+          </a>
+        </div>
+
+        <section className="mt-8">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-medium text-stone-700">آخر الفيديوهات</h2>
+            <span className="text-xs text-stone-400">عبر YouTube RSS — بدون API</span>
+          </div>
+
+          {videosLoading ? (
+            <div className="space-y-3">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-2xl bg-stone-100"
+                />
+              ))}
+            </div>
+          ) : videos.length === 0 ? (
+            <p className="rounded-2xl border border-dashed border-stone-200 py-10 text-center text-sm text-stone-500">
+              لا توجد فيديوهات
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {videos.map((video) => (
+                <RssVideoCard
+                  key={video.id}
+                  video={video}
+                  onPlay={playRssVideo}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
+
+      <VideoPlayerModal
+        video={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+      />
+    </>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-stone-50 px-3 py-4 text-center">
+      <p className="text-lg font-semibold text-stone-800">{value}</p>
+      <p className="mt-1 text-xs text-stone-500">{label}</p>
+    </div>
+  );
+}

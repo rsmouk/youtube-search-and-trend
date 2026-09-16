@@ -3,24 +3,19 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  getSavedCount,
-  SAVED_CHANNELS_CHANGED,
-} from "@/lib/storage";
-
-const links = [
-  { href: "/", label: "البحث" },
-  { href: "/trending", label: "الترند" },
-  { href: "/saved", label: "المحفوظات", showCount: true },
-  { href: "/settings", label: "الإعدادات" },
-];
+import { useAuth } from "@/components/AuthProvider";
+import { fetchSavedCount } from "@/lib/saved-service";
+import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
 
 export default function Header() {
   const pathname = usePathname();
+  const { user, isAdmin, signOut, loading } = useAuth();
   const [savedCount, setSavedCount] = useState(0);
 
   useEffect(() => {
-    const updateCount = () => setSavedCount(getSavedCount());
+    const updateCount = async () => {
+      setSavedCount(await fetchSavedCount(user?.id));
+    };
     updateCount();
 
     window.addEventListener(SAVED_CHANNELS_CHANGED, updateCount);
@@ -30,7 +25,16 @@ export default function Header() {
       window.removeEventListener(SAVED_CHANNELS_CHANGED, updateCount);
       window.removeEventListener("storage", updateCount);
     };
-  }, []);
+  }, [user?.id]);
+
+  const links = [
+    { href: "/", label: "البحث" },
+    { href: "/trending", label: "الترند" },
+    { href: "/channels", label: "القنوات" },
+    { href: "/saved", label: "المحفوظات", showCount: true },
+    { href: "/settings", label: "الإعدادات" },
+    ...(isAdmin ? [{ href: "/admin", label: "الإدارة" }] : []),
+  ];
 
   return (
     <header className="border-b border-stone-200/80 bg-white/70 backdrop-blur-md sticky top-0 z-40">
@@ -52,35 +56,56 @@ export default function Header() {
           </div>
         </Link>
 
-        <nav className="flex items-center gap-1 rounded-2xl bg-stone-100/80 p-1">
-          {links.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm transition-colors ${
-                  active
-                    ? "bg-white text-stone-800 shadow-sm"
-                    : "text-stone-500 hover:text-stone-700"
-                }`}
+        <div className="flex items-center gap-2">
+          <nav className="hidden items-center gap-1 rounded-2xl bg-stone-100/80 p-1 sm:flex">
+            {links.map((link) => {
+              const active = pathname === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  className={`flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm transition-colors ${
+                    active
+                      ? "bg-white text-stone-800 shadow-sm"
+                      : "text-stone-500 hover:text-stone-700"
+                  }`}
+                >
+                  {link.label}
+                  {link.showCount && savedCount > 0 && (
+                    <span
+                      className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
+                        active
+                          ? "bg-stone-800 text-white"
+                          : "bg-stone-200 text-stone-600"
+                      }`}
+                    >
+                      {savedCount}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {!loading && (
+            user ? (
+              <button
+                type="button"
+                onClick={() => signOut()}
+                className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs text-stone-600 hover:bg-stone-50"
               >
-                {link.label}
-                {link.showCount && savedCount > 0 && (
-                  <span
-                    className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[10px] font-semibold leading-none ${
-                      active
-                        ? "bg-stone-800 text-white"
-                        : "bg-stone-200 text-stone-600"
-                    }`}
-                  >
-                    {savedCount}
-                  </span>
-                )}
+                خروج
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-xl bg-stone-800 px-3 py-2 text-xs font-medium text-white hover:bg-stone-700"
+              >
+                دخول
               </Link>
-            );
-          })}
-        </nav>
+            )
+          )}
+        </div>
       </div>
     </header>
   );
