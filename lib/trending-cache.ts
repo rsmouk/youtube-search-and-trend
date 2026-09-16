@@ -10,8 +10,8 @@ interface CacheEntry<T> {
   cachedAt: number;
 }
 
-function categoriesKey(regionCode: string): string {
-  return `${CACHE_PREFIX}categories_${regionCode}`;
+function categoriesKey(regionCode: string, locale: string): string {
+  return `${CACHE_PREFIX}categories_${regionCode}_${locale}`;
 }
 
 function videosKey(regionCode: string, categoryId: string): string {
@@ -63,13 +63,18 @@ export function formatCacheRemaining(
 }
 
 export async function getCachedVideoCategories(
-  regionCode: string
+  regionCode: string,
+  locale = "en"
 ): Promise<{ data: VideoCategory[]; fromCache: boolean; error?: string }> {
-  const key = categoriesKey(regionCode);
+  const key = categoriesKey(regionCode, locale);
   const cached = readCache<VideoCategory[]>(key);
   if (cached) return { data: cached, fromCache: true };
 
-  const res = await fetch(`/api/trending/categories?region=${encodeURIComponent(regionCode)}`);
+  const params = new URLSearchParams({
+    region: regionCode,
+    hl: locale,
+  });
+  const res = await fetch(`/api/trending/categories?${params}`);
   const json = await res.json();
   if (!res.ok) {
     return { data: [], fromCache: false, error: json.error ?? "fetch_failed" };

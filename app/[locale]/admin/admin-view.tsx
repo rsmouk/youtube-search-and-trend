@@ -15,10 +15,12 @@ import {
 import { formatCount } from "@/lib/format";
 import { pageMain } from "@/lib/layout-classes";
 import { useCardLayout } from "@/lib/use-card-layout";
+import { useLocalePath } from "@/lib/use-locale-path";
 
-export default function AdminPage() {
+export default function AdminView() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
+  const lp = useLocalePath();
   const { t } = useI18n();
   const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<SiteChannelRow[]>([]);
@@ -38,9 +40,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
-      router.replace("/login");
+      router.replace(lp("/login"));
     }
-  }, [user, isAdmin, authLoading, router]);
+  }, [user, isAdmin, authLoading, router, lp]);
 
   useEffect(() => {
     if (isAdmin) load();

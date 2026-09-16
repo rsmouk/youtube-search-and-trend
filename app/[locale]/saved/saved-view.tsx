@@ -14,10 +14,12 @@ import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
 import { useCardLayout } from "@/lib/use-card-layout";
 import type { SavedChannel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
+import { useLocalePath } from "@/lib/use-locale-path";
 
-export default function SavedPage() {
+export default function SavedView() {
   const { user } = useAuth();
   const { t } = useI18n();
+  const lp = useLocalePath();
   const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<SavedChannel[]>([]);
   const [mounted, setMounted] = useState(false);
@@ -57,7 +59,7 @@ export default function SavedPage() {
         >
           {!user && (
             <Link
-              href="/login"
+              href={lp("/login")}
               className="mt-2 inline-block text-sm text-stone-600 underline hover:text-stone-800"
             >
               {t("saved.signIn")}
@@ -68,12 +70,12 @@ export default function SavedPage() {
         {channels.length === 0 ? (
           <div className="rounded-3xl border border-dashed border-stone-200 bg-white px-6 py-16 text-center">
             <p className="text-stone-500">{t("saved.empty")}</p>
-            <a
-              href="/"
+            <Link
+              href={lp("/")}
               className="mt-4 inline-block rounded-xl bg-stone-800 px-5 py-2.5 text-sm text-white hover:bg-stone-700"
             >
               {t("saved.startSearch")}
-            </a>
+            </Link>
           </div>
         ) : (
           <>

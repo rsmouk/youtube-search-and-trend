@@ -73,7 +73,7 @@ const COUNTRY_FLAGS: Record<string, string> = {
   ES: "🇪🇸",
 };
 
-function regionDisplayName(code: string, locale: Locale): string {
+export function regionDisplayName(code: string, locale: Locale): string {
   if (!code) return "";
   try {
     // Use Latin script locale for names when Arabic to avoid mixed digit systems

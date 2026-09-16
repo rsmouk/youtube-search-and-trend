@@ -7,10 +7,12 @@ import PageHeader from "@/components/PageHeader";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { pageMainLg } from "@/lib/layout-classes";
+import { useLocalePath } from "@/lib/use-locale-path";
 
-export default function SettingsPage() {
+export default function SettingsView() {
   const { user, isAdmin, loading: authLoading } = useAuth();
   const router = useRouter();
+  const lp = useLocalePath();
   const { t, dict } = useI18n();
   const [keys, setKeys] = useState<string[]>([""]);
   const [saved, setSaved] = useState(false);
@@ -20,9 +22,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!authLoading && (!user || !isAdmin)) {
-      router.replace("/login");
+      router.replace(lp("/login"));
     }
-  }, [user, isAdmin, authLoading, router]);
+  }, [user, isAdmin, authLoading, router, lp]);
 
   useEffect(() => {
     if (!isAdmin) return;

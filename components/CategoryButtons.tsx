@@ -1,6 +1,7 @@
 "use client";
 
 import { useI18n } from "@/components/I18nProvider";
+import { translateCategoryTitle } from "@/lib/i18n/categories";
 import type { VideoCategory } from "@/lib/types";
 
 interface CategoryButtonsProps {
@@ -16,11 +17,14 @@ export default function CategoryButtons({
   loading,
   onSelect,
 }: CategoryButtonsProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const allCategories: VideoCategory[] = [
     { id: "", title: t("category.all") },
-    ...categories,
+    ...categories.map((c) => ({
+      ...c,
+      title: translateCategoryTitle(c.id, c.title, locale),
+    })),
   ];
 
   return (

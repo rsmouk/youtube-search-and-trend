@@ -13,6 +13,7 @@ import {
   removeChannelForUser,
   saveChannelForUser,
 } from "@/lib/saved-service";
+import { useLocalePath } from "@/lib/use-locale-path";
 import { useEffect, useState } from "react";
 
 interface ChannelCardProps {
@@ -28,6 +29,7 @@ export default function ChannelCard({
 }: ChannelCardProps) {
   const { user } = useAuth();
   const { t } = useI18n();
+  const lp = useLocalePath();
   const [saved, setSaved] = useState(false);
   const [checking, setChecking] = useState(true);
   const [shareMsg, setShareMsg] = useState("");
@@ -95,7 +97,7 @@ export default function ChannelCard({
         {t("common.open")}
       </a>
       <Link
-        href={`/channel/${channel.id}`}
+        href={lp(`/channel/${channel.id}`)}
         onClick={() => cacheChannel(channel)}
         className={`rounded-xl border border-stone-200 bg-white text-center text-xs font-medium text-stone-700 transition-colors hover:bg-stone-50 ${
           variant === "row" ? "px-3 py-2" : "flex-1 px-3 py-2"
@@ -153,7 +155,7 @@ export default function ChannelCard({
     return (
       <article className="flex flex-col gap-3 rounded-2xl border border-stone-200/80 bg-white p-3 shadow-sm transition-all hover:shadow-md sm:flex-row sm:items-center">
         <div className="flex min-w-0 flex-1 items-center gap-3">
-          <Link href={`/channel/${channel.id}`} onClick={() => cacheChannel(channel)}>
+          <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
             <img
               src={thumbnail}
               alt={channel.snippet.title}
@@ -162,7 +164,7 @@ export default function ChannelCard({
           </Link>
           <div className="min-w-0 flex-1">
             <Link
-              href={`/channel/${channel.id}`}
+              href={lp(`/channel/${channel.id}`)}
               onClick={() => cacheChannel(channel)}
               className="block truncate text-sm font-semibold text-stone-800 hover:text-stone-600"
             >
@@ -179,7 +181,7 @@ export default function ChannelCard({
   return (
     <article className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex flex-1 items-start gap-4 p-4">
-        <Link href={`/channel/${channel.id}`} onClick={() => cacheChannel(channel)}>
+        <Link href={lp(`/channel/${channel.id}`)} onClick={() => cacheChannel(channel)}>
           <img
             src={thumbnail}
             alt={channel.snippet.title}
@@ -188,7 +190,7 @@ export default function ChannelCard({
         </Link>
         <div className="min-w-0 flex-1">
           <Link
-            href={`/channel/${channel.id}`}
+            href={lp(`/channel/${channel.id}`)}
             onClick={() => cacheChannel(channel)}
             className="block truncate text-base font-semibold text-stone-800 hover:text-stone-600"
           >

@@ -241,4 +241,40 @@ export const es: TranslationDict = {
   category: {
     all: "Todas las categorías",
   },
+  seo: {
+    siteName: "Canales de YouTube",
+    titleTemplate: "%s | Canales de YouTube",
+    defaultTitle: "Directorio de canales de YouTube",
+    defaultDescription:
+      "Descubre canales de YouTube por palabra clave y explora tendencias por país y categoría.",
+    homeTitle: "Descubre canales de YouTube",
+    homeDescription:
+      "Busca canales de YouTube por palabra clave y encuentra creadores que publicaron recientemente.",
+    trendingTitle: "Videos en tendencia en {country}",
+    trendingDescription:
+      "Mira los videos más populares de YouTube ahora mismo en {country}.",
+    trendingCategoryTitle: "{category} en tendencia en {country}",
+    trendingCategoryDescription:
+      "Los mejores videos de {category} en tendencia en YouTube en {country}.",
+    channelsTitle: "Directorio de canales de YouTube",
+    channelsDescription:
+      "Explora todos los canales de YouTube descubiertos en este sitio, con filtros y destacados.",
+    savedTitle: "Canales guardados",
+    savedDescription: "Tus canales de YouTube guardados en un solo lugar.",
+    channelTitle: "{name} — canal de YouTube",
+    channelDescription:
+      "Mira los últimos videos y estadísticas de {name} en el directorio.",
+    channelFallbackDescription:
+      "Perfil de canal de YouTube, estadísticas y últimos videos.",
+    loginTitle: "Iniciar sesión",
+    loginDescription:
+      "Inicia sesión para sincronizar tus canales guardados en todos tus dispositivos.",
+    accountTitle: "Mi cuenta",
+    accountDescription: "Administra tu cuenta y contraseña.",
+    settingsTitle: "Ajustes",
+    settingsDescription: "Administra las claves API de YouTube de este sitio.",
+    adminTitle: "Panel de administración",
+    adminDescription:
+      "Administra los canales destacados en la página de inicio.",
+  },
 };

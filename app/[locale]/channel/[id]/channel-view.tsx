@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import RssVideoCard from "@/components/RssVideoCard";
@@ -20,13 +19,13 @@ import {
   removeChannelForUser,
   saveChannelForUser,
 } from "@/lib/saved-service";
+import { useLocalePath } from "@/lib/use-locale-path";
 import type { Channel } from "@/lib/types";
 
-export default function ChannelPage() {
-  const params = useParams();
-  const channelId = params.id as string;
+export default function ChannelView({ channelId }: { channelId: string }) {
   const { user } = useAuth();
   const { t, locale } = useI18n();
+  const lp = useLocalePath();
   const [channel, setChannel] = useState<Channel | null>(null);
   const [videos, setVideos] = useState<RssVideo[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +72,11 @@ export default function ChannelPage() {
     checkChannelSaved(channelId, user?.id).then(setSaved);
   }, [channelId, user?.id]);
 
+  useEffect(() => {
+    if (!channel) return;
+    document.title = `${t("seo.channelTitle", { name: channel.snippet.title })} | ${t("seo.siteName")}`;
+  }, [channel, t]);
+
   const thumbnail =
     channel?.snippet.thumbnails.medium?.url ??
     channel?.snippet.thumbnails.default?.url ??
@@ -117,7 +121,7 @@ export default function ChannelPage() {
         <Header />
         <main className={`${pageMainChannel} text-center`}>
           <p className="text-stone-500">{t("channel.notFound")}</p>
-          <Link href="/" className="mt-4 inline-block text-sm underline">
+          <Link href={lp("/")} className="mt-4 inline-block text-sm underline">
             {t("channel.backSearch")}
           </Link>
         </main>

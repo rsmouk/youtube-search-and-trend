@@ -236,4 +236,37 @@ export const ar: TranslationDict = {
   category: {
     all: "كل التصنيفات",
   },
+  seo: {
+    siteName: "دليل قنوات يوتيوب",
+    titleTemplate: "%s | دليل قنوات يوتيوب",
+    defaultTitle: "دليل قنوات يوتيوب",
+    defaultDescription:
+      "اكتشف قنوات يوتيوب بالكلمة المفتاحية واستكشف فيديوهات الترند حسب الدولة والتصنيف.",
+    homeTitle: "اكتشف قنوات يوتيوب",
+    homeDescription:
+      "ابحث عن قنوات يوتيوب بالكلمة المفتاحية واعثر على صانعي محتوى نشروا مؤخراً.",
+    trendingTitle: "ترند الفيديوهات في {country}",
+    trendingDescription:
+      "شاهد أشهر فيديوهات يوتيوب الرائجة الآن في {country}.",
+    trendingCategoryTitle: "ترند {category} في {country}",
+    trendingCategoryDescription:
+      "أبرز فيديوهات {category} الرائجة على يوتيوب في {country} الآن.",
+    channelsTitle: "دليل قنوات يوتيوب",
+    channelsDescription:
+      "تصفح جميع قنوات يوتيوب المكتشفة في هذا الموقع مع الفلاتر والاختيارات المميزة.",
+    savedTitle: "القنوات المحفوظة",
+    savedDescription: "قنوات يوتيوب المحفوظة لديك في مكان واحد.",
+    channelTitle: "{name} — قناة يوتيوب",
+    channelDescription:
+      "شاهد أحدث الفيديوهات وإحصائيات {name} في دليل قنوات يوتيوب.",
+    channelFallbackDescription: "ملف قناة يوتيوب مع الإحصائيات وأحدث الفيديوهات.",
+    loginTitle: "تسجيل الدخول",
+    loginDescription: "سجّل الدخول لمزامنة قنواتك المحفوظة عبر الأجهزة.",
+    accountTitle: "حسابي",
+    accountDescription: "إدارة حسابك وكلمة المرور.",
+    settingsTitle: "الإعدادات",
+    settingsDescription: "إدارة مفاتيح YouTube API لهذا الموقع.",
+    adminTitle: "لوحة الإدارة",
+    adminDescription: "إدارة القنوات المميزة المعروضة في الصفحة الرئيسية.",
+  },
 };

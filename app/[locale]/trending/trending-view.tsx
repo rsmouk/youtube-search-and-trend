@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Header from "@/components/Header";
 import CategoryButtons from "@/components/CategoryButtons";
 import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
@@ -14,8 +15,10 @@ import {
   getTrendingPrefs,
   getTrendingRegionLabel,
   getTrendingRegionOptions,
+  regionDisplayName,
   saveTrendingPrefs,
 } from "@/lib/filters";
+import { getCategoryLabel } from "@/lib/i18n/categories";
 import {
   formatCacheRemaining,
   getCachedTrendingVideos,
@@ -24,12 +27,16 @@ import {
   getVideosCacheKey,
 } from "@/lib/trending-cache";
 import { useCardLayout } from "@/lib/use-card-layout";
+import { useLocalePath } from "@/lib/use-locale-path";
 import { translateYouTubeError } from "@/lib/youtube";
 import type { TrendingVideo, VideoCategory } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 
-export default function TrendingPage() {
+export default function TrendingView() {
   const { t, locale } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const lp = useLocalePath();
   const { layout, setLayout } = useCardLayout();
   const [mounted, setMounted] = useState(false);
   const [regionCode, setRegionCode] = useState(DEFAULT_TRENDING_PREFS.regionCode);
@@ -42,6 +49,19 @@ export default function TrendingPage() {
   const [selectedVideo, setSelectedVideo] = useState<TrendingVideo | null>(null);
   const [fromCache, setFromCache] = useState(false);
   const [cacheRemaining, setCacheRemaining] = useState("");
+
+  const syncUrl = useCallback(
+    (region: string, category: string) => {
+      const params = new URLSearchParams();
+      if (region) params.set("region", region);
+      if (category) params.set("category", category);
+      const qs = params.toString();
+      router.replace(qs ? `${lp("/trending")}?${qs}` : lp("/trending"), {
+        scroll: false,
+      });
+    },
+    [lp, router]
+  );
 
   const loadVideos = useCallback(
     async (region: string, category: string) => {
@@ -77,7 +97,10 @@ export default function TrendingPage() {
       setLoadingCategories(true);
       setError("");
       try {
-        const { data: cats, error: errCode } = await getCachedVideoCategories(region);
+        const { data: cats, error: errCode } = await getCachedVideoCategories(
+          region,
+          locale
+        );
         if (errCode) {
           setCategories([]);
           setVideos([]);
@@ -101,29 +124,59 @@ export default function TrendingPage() {
         setLoadingCategories(false);
       }
     },
-    [loadVideos, t]
+    [loadVideos, locale, t]
   );
 
   useEffect(() => {
     const prefs = getTrendingPrefs();
-    setRegionCode(prefs.regionCode);
-    setCategoryId(prefs.categoryId);
+    const region =
+      searchParams.get("region") || prefs.regionCode || DEFAULT_TRENDING_PREFS.regionCode;
+    const category =
+      searchParams.get("category") ||
+      (!searchParams.get("region") ? prefs.categoryId : "") ||
+      "";
+    setRegionCode(region);
+    setCategoryId(category);
     setMounted(true);
-    loadCategoriesAndVideos(prefs.regionCode, prefs.categoryId);
-  }, [loadCategoriesAndVideos]);
+    syncUrl(region, category);
+    loadCategoriesAndVideos(region, category);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init once from URL/prefs
+  }, []);
 
   const handleCountryChange = (code: string) => {
     setRegionCode(code);
     setCategoryId("");
     saveTrendingPrefs({ regionCode: code, categoryId: "" });
+    syncUrl(code, "");
     loadCategoriesAndVideos(code, "");
   };
 
   const handleCategorySelect = (id: string) => {
     setCategoryId(id);
     saveTrendingPrefs({ regionCode, categoryId: id });
+    syncUrl(regionCode, id);
     loadVideos(regionCode, id);
   };
+
+  const regionLabel = getTrendingRegionLabel(
+    regionCode,
+    locale,
+    t("common.unspecified")
+  );
+
+  const pageHeading = useMemo(() => {
+    const country =
+      regionDisplayName(regionCode || "US", locale) || t("common.unspecified");
+    const category = getCategoryLabel(categoryId, locale, t("category.all"));
+    return categoryId
+      ? t("seo.trendingCategoryTitle", { category, country })
+      : t("seo.trendingTitle", { country });
+  }, [categoryId, locale, regionCode, t]);
+
+  useEffect(() => {
+    if (!mounted) return;
+    document.title = `${pageHeading} | ${t("seo.siteName")}`;
+  }, [mounted, pageHeading, t]);
 
   if (!mounted) {
     return (
@@ -135,12 +188,6 @@ export default function TrendingPage() {
       </>
     );
   }
-
-  const regionLabel = getTrendingRegionLabel(
-    regionCode,
-    locale,
-    t("common.unspecified")
-  );
 
   return (
     <>
@@ -155,7 +202,7 @@ export default function TrendingPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
                   <h1 className="min-w-0 text-3xl font-semibold text-stone-800">
-                    {t("trending.title")}
+                    {pageHeading}
                   </h1>
                   <LayoutToggle layout={layout} onChange={setLayout} />
                 </div>

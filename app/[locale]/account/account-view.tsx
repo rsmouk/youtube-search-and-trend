@@ -7,9 +7,11 @@ import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
+import { useLocalePath } from "@/lib/use-locale-path";
 
-export default function AccountPage() {
+export default function AccountView() {
   const router = useRouter();
+  const lp = useLocalePath();
   const { user, loading: authLoading } = useAuth();
   const { t } = useI18n();
   const [password, setPassword] = useState("");
@@ -20,9 +22,9 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      router.replace("/login");
+      router.replace(lp("/login"));
     }
-  }, [user, authLoading, router]);
+  }, [user, authLoading, router, lp]);
 
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();

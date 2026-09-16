@@ -3,9 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n";
 import { useI18n } from "@/components/I18nProvider";
+import { useSwitchLocale } from "@/lib/use-locale-path";
 
 export default function LanguageSwitcher() {
-  const { locale, setLocale, t } = useI18n();
+  const { locale, t } = useI18n();
+  const switchLocale = useSwitchLocale();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -51,7 +53,7 @@ export default function LanguageSwitcher() {
                 key={loc}
                 type="button"
                 onClick={() => {
-                  setLocale(loc as Locale);
+                  switchLocale(loc as Locale);
                   setOpen(false);
                 }}
                 className={`flex w-full items-center justify-between rounded-xl px-3 py-2.5 text-sm transition-colors ${

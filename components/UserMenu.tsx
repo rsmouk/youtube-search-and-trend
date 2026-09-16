@@ -4,10 +4,12 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
+import { useLocalePath } from "@/lib/use-locale-path";
 
 export default function UserMenu() {
   const { user, profile, signOut } = useAuth();
   const { t } = useI18n();
+  const lp = useLocalePath();
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +66,7 @@ export default function UserMenu() {
 
           <div className="p-1">
             <Link
-              href="/account"
+              href={lp("/account")}
               onClick={() => setOpen(false)}
               className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-stone-700 transition-colors hover:bg-stone-50"
             >
@@ -85,7 +87,7 @@ export default function UserMenu() {
             {profile?.role === "admin" && (
               <>
                 <Link
-                  href="/admin"
+                  href={lp("/admin")}
                   onClick={() => setOpen(false)}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                 >
@@ -103,7 +105,7 @@ export default function UserMenu() {
                   {t("userMenu.adminPanel")}
                 </Link>
                 <Link
-                  href="/settings"
+                  href={lp("/settings")}
                   onClick={() => setOpen(false)}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                 >

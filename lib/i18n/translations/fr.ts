@@ -241,4 +241,40 @@ export const fr: TranslationDict = {
   category: {
     all: "Toutes les catégories",
   },
+  seo: {
+    siteName: "Chaînes YouTube",
+    titleTemplate: "%s | Chaînes YouTube",
+    defaultTitle: "Annuaire de chaînes YouTube",
+    defaultDescription:
+      "Découvrez des chaînes YouTube par mot-clé et explorez les tendances par pays et catégorie.",
+    homeTitle: "Découvrir des chaînes YouTube",
+    homeDescription:
+      "Recherchez des chaînes YouTube par mot-clé et trouvez des créateurs ayant publié récemment.",
+    trendingTitle: "Vidéos tendances en {country}",
+    trendingDescription:
+      "Regardez les vidéos YouTube les plus populaires en ce moment en {country}.",
+    trendingCategoryTitle: "{category} en tendance en {country}",
+    trendingCategoryDescription:
+      "Les meilleures vidéos {category} en tendance sur YouTube en {country}.",
+    channelsTitle: "Annuaire de chaînes YouTube",
+    channelsDescription:
+      "Parcourez toutes les chaînes YouTube découvertes sur ce site, avec filtres et suggestions.",
+    savedTitle: "Chaînes enregistrées",
+    savedDescription: "Vos chaînes YouTube enregistrées au même endroit.",
+    channelTitle: "{name} — chaîne YouTube",
+    channelDescription:
+      "Voir les dernières vidéos et stats de {name} sur l'annuaire YouTube.",
+    channelFallbackDescription:
+      "Profil de chaîne YouTube, statistiques et dernières vidéos.",
+    loginTitle: "Connexion",
+    loginDescription:
+      "Connectez-vous pour synchroniser vos chaînes enregistrées sur tous vos appareils.",
+    accountTitle: "Mon compte",
+    accountDescription: "Gérez votre compte et votre mot de passe.",
+    settingsTitle: "Paramètres",
+    settingsDescription: "Gérer les clés API YouTube de ce site.",
+    adminTitle: "Panneau d'administration",
+    adminDescription:
+      "Gérer les chaînes mises en avant sur la page d'accueil.",
+  },
 };

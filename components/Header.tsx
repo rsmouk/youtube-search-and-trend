@@ -10,6 +10,7 @@ import UserMenu from "@/components/UserMenu";
 import NavIcon from "@/components/NavIcon";
 import { fetchSavedCount } from "@/lib/saved-service";
 import { SAVED_CHANNELS_CHANGED } from "@/lib/storage";
+import { stripLocale, useLocalePath } from "@/lib/use-locale-path";
 
 type NavLink = {
   href: string;
@@ -20,6 +21,8 @@ type NavLink = {
 
 export default function Header() {
   const pathname = usePathname();
+  const pathWithoutLocale = stripLocale(pathname);
+  const lp = useLocalePath();
   const { user, isAdmin, loading } = useAuth();
   const { t } = useI18n();
   const [savedCount, setSavedCount] = useState(0);
@@ -61,10 +64,15 @@ export default function Header() {
         : "text-stone-500 hover:text-stone-700"
     }`;
 
+  const isActive = (href: string) =>
+    href === "/"
+      ? pathWithoutLocale === "/"
+      : pathWithoutLocale === href || pathWithoutLocale.startsWith(`${href}/`);
+
   return (
     <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/70 backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href={lp("/")} className="flex items-center gap-2">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-stone-100 text-stone-600">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -81,11 +89,11 @@ export default function Header() {
         <div className="flex items-center gap-2">
           <nav className="hidden items-center gap-1 rounded-2xl bg-stone-100/80 p-1 sm:flex">
             {links.map((link) => {
-              const active = pathname === link.href;
+              const active = isActive(link.href);
               return (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={lp(link.href)}
                   className={linkClass(active)}
                 >
                   <NavIcon name={link.icon} />
@@ -109,7 +117,7 @@ export default function Header() {
           <LanguageSwitcher />
           {!loading && !user && (
             <Link
-              href="/login"
+              href={lp("/login")}
               aria-label={t("nav.login")}
               title={t("nav.login")}
               className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-stone-800 text-white transition-colors hover:bg-stone-700"
@@ -131,11 +139,11 @@ export default function Header() {
       <nav className="nav-scroll mx-auto flex max-w-6xl gap-1 overflow-x-auto pb-3 pe-4 ps-6 sm:hidden">
         <span className="w-1 shrink-0" aria-hidden />
         {links.map((link) => {
-          const active = pathname === link.href;
+          const active = isActive(link.href);
           return (
             <Link
               key={link.href}
-              href={link.href}
+              href={lp(link.href)}
               className={`${linkClass(active, true)} bg-stone-100/80`}
             >
               <NavIcon name={link.icon} className="h-3.5 w-3.5" />

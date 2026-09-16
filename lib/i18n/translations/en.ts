@@ -235,4 +235,37 @@ export const en = {
   category: {
     all: "All categories",
   },
+  seo: {
+    siteName: "YouTube Channels",
+    titleTemplate: "%s | YouTube Channels",
+    defaultTitle: "YouTube Channels Directory",
+    defaultDescription:
+      "Discover YouTube channels by keyword and explore trending videos by country and category.",
+    homeTitle: "Discover YouTube Channels",
+    homeDescription:
+      "Search YouTube channels by keyword and find creators who published recently.",
+    trendingTitle: "Trending videos in {country}",
+    trendingDescription:
+      "Watch the most popular YouTube videos trending now in {country}.",
+    trendingCategoryTitle: "{category} trending in {country}",
+    trendingCategoryDescription:
+      "Top trending {category} videos on YouTube in {country} right now.",
+    channelsTitle: "YouTube channel directory",
+    channelsDescription:
+      "Browse all YouTube channels discovered on this site, with filters and featured picks.",
+    savedTitle: "Saved channels",
+    savedDescription: "Your saved YouTube channels in one place.",
+    channelTitle: "{name} — YouTube channel",
+    channelDescription:
+      "Watch latest videos and stats for {name} on YouTube Channels Directory.",
+    channelFallbackDescription: "YouTube channel profile, stats, and latest videos.",
+    loginTitle: "Sign in",
+    loginDescription: "Sign in to sync your saved YouTube channels across devices.",
+    accountTitle: "My account",
+    accountDescription: "Manage your account and password.",
+    settingsTitle: "Settings",
+    settingsDescription: "Manage YouTube API keys for this site.",
+    adminTitle: "Admin panel",
+    adminDescription: "Manage featured channels shown on the homepage.",
+  },
 } as const;

@@ -273,7 +273,8 @@ interface TrendingVideosResponse {
 export async function getVideoCategories(
   regionCode: string,
   apiKeys: string[],
-  referer?: string
+  referer?: string,
+  hl?: string
 ): Promise<VideoCategory[]> {
   const data = await fetchWithKeyRotation<VideoCategoriesResponse>(
     (apiKey) => {
@@ -282,6 +283,7 @@ export async function getVideoCategories(
         regionCode,
         key: apiKey,
       });
+      if (hl) params.set("hl", hl);
       return `${YOUTUBE_API_BASE}/videoCategories?${params}`;
     },
     apiKeys,

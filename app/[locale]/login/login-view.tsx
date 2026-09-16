@@ -7,11 +7,13 @@ import Header from "@/components/Header";
 import { useI18n } from "@/components/I18nProvider";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import { pageMainMd } from "@/lib/layout-classes";
+import { useLocalePath } from "@/lib/use-locale-path";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { t } = useI18n();
+  const lp = useLocalePath();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -38,7 +40,7 @@ function LoginForm() {
 
   const finishLogin = () => {
     router.refresh();
-    router.push("/");
+    router.push(lp("/"));
   };
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -60,7 +62,7 @@ function LoginForm() {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback`,
+            emailRedirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(lp("/"))}`,
           },
         });
 
@@ -115,7 +117,7 @@ function LoginForm() {
       const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
         provider,
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(lp("/"))}`,
         },
       });
 
@@ -244,7 +246,7 @@ function LoginForm() {
           </button>
 
           <Link
-            href="/"
+            href={lp("/")}
             className="mt-4 block text-center text-xs text-stone-400 hover:text-stone-600"
           >
             {t("login.backHome")}
