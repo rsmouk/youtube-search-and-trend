@@ -1,5 +1,6 @@
 import { getServerApiKeys } from "@/lib/api-keys-server";
 import { DEFAULT_FILTERS, type SearchFilters } from "@/lib/filters";
+import { buildSearchCacheKey, withSearchCache } from "@/lib/search-cache";
 import { NextRequest, NextResponse } from "next/server";
 import { searchRecentChannels, YouTubeApiError } from "@/lib/youtube";
 
@@ -19,15 +20,28 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const keyword = typeof body.keyword === "string" ? body.keyword : "";
+    const filters = parseFilters(body.filters);
+    const trimmed = keyword.trim();
+
+    if (!trimmed) {
+      return NextResponse.json(
+        { error: "enter_keyword", code: "enter_keyword" },
+        { status: 400 }
+      );
+    }
+
+    const cacheKey = buildSearchCacheKey(trimmed, filters);
     const apiKeys = await getServerApiKeys();
 
-    const filters = parseFilters(body.filters);
-    const result = await searchRecentChannels(keyword, apiKeys, undefined, filters);
+    const { result, fromCache } = await withSearchCache(cacheKey, () =>
+      searchRecentChannels(trimmed, apiKeys, undefined, filters)
+    );
 
     return NextResponse.json({
       channels: result.channels,
       totalResults: result.totalResults,
-      keyword: keyword.trim(),
+      keyword: trimmed,
+      fromCache,
     });
   } catch (error) {
     if (error instanceof YouTubeApiError) {

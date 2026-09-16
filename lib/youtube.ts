@@ -1,5 +1,6 @@
 import type { SearchFilters } from "./filters";
 import { DEFAULT_FILTERS } from "./filters";
+import { getSiteChannelsByIds } from "./channels-db";
 import type { Channel, TrendingVideo, VideoCategory } from "./types";
 import { QUOTA_COSTS, recordApiQuotaUsage } from "./youtube-quota";
 
@@ -192,30 +193,51 @@ export async function searchRecentChannels(
     return { channels: [], totalResults: 0 };
   }
 
-  const channelsData = await fetchWithKeyRotation<ChannelsListResponse>(
-    (apiKey) => {
-      const params = new URLSearchParams({
-        part: "snippet,statistics",
-        id: channelIds.join(","),
-        maxResults: "50",
-        key: apiKey,
-      });
-      return `${YOUTUBE_API_BASE}/channels?${params}`;
-    },
-    apiKeys,
-    referer,
-    QUOTA_COSTS.channels
-  );
+  const fromDb = await getSiteChannelsByIds(channelIds);
+  const missingIds = channelIds.filter((id) => !fromDb.has(id));
 
-  const channels: Channel[] = (channelsData.items ?? []).map((item) => {
-    const meta = channelMap.get(item.id);
-    return {
-      id: item.id,
-      snippet: item.snippet,
-      statistics: item.statistics,
-      recentVideoTitle: meta?.recentVideoTitle,
-      recentVideoPublishedAt: meta?.recentVideoPublishedAt,
-    };
+  const fetchedById = new Map<string, Channel>();
+
+  if (missingIds.length > 0) {
+    // YouTube allows up to 50 ids per channels.list call
+    for (let i = 0; i < missingIds.length; i += 50) {
+      const batch = missingIds.slice(i, i + 50);
+      const channelsData = await fetchWithKeyRotation<ChannelsListResponse>(
+        (apiKey) => {
+          const params = new URLSearchParams({
+            part: "snippet,statistics",
+            id: batch.join(","),
+            maxResults: "50",
+            key: apiKey,
+          });
+          return `${YOUTUBE_API_BASE}/channels?${params}`;
+        },
+        apiKeys,
+        referer,
+        QUOTA_COSTS.channels
+      );
+
+      for (const item of channelsData.items ?? []) {
+        fetchedById.set(item.id, {
+          id: item.id,
+          snippet: item.snippet,
+          statistics: item.statistics,
+        });
+      }
+    }
+  }
+
+  const channels: Channel[] = channelIds.flatMap((id) => {
+    const meta = channelMap.get(id);
+    const base = fromDb.get(id) ?? fetchedById.get(id);
+    if (!base) return [];
+    return [
+      {
+        ...base,
+        recentVideoTitle: meta?.recentVideoTitle,
+        recentVideoPublishedAt: meta?.recentVideoPublishedAt,
+      },
+    ];
   });
 
   let filtered = channels;
@@ -345,23 +367,4 @@ export async function getTrendingVideos(
     likeCount: item.statistics.likeCount,
     commentCount: item.statistics.commentCount,
   }));
-}
-
-export function translateYouTubeError(code: string, t: (key: string) => string): string {
-  switch (code) {
-    case "missing_api_key":
-      return t("errors.missingApiKey");
-    case "blocked_key":
-      return t("youtube.blockedKey");
-    case "referrer_blocked":
-      return t("youtube.referrerBlocked");
-    case "quota_exceeded":
-      return t("youtube.quotaExceeded");
-    case "enter_keyword":
-      return t("youtube.enterKeyword");
-    case "all_keys_failed":
-      return t("youtube.allKeysFailed");
-    default:
-      return code;
-  }
 }

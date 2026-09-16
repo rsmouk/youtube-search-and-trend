@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { SearchFilters } from "@/lib/filters";
 import { DEFAULT_FILTERS, getSavedFilters, saveFilters } from "@/lib/filters";
 import Header from "@/components/Header";
@@ -11,9 +11,10 @@ import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import SuggestedChannels from "@/components/SuggestedChannels";
 import { useI18n } from "@/components/I18nProvider";
 import { upsertChannelsFromSearch } from "@/lib/channels-db";
+import { buildSearchCacheKey } from "@/lib/search-cache";
 import { addRecentSearch } from "@/lib/storage";
 import { useCardLayout } from "@/lib/use-card-layout";
-import { translateYouTubeError } from "@/lib/youtube";
+import { translateYouTubeError } from "@/lib/youtube-errors";
 import type { Channel } from "@/lib/types";
 import { pageMain } from "@/lib/layout-classes";
 import PageTitle from "@/components/PageTitle";
@@ -30,6 +31,9 @@ export default function HomePage() {
   const [searchedKeyword, setSearchedKeyword] = useState("");
   const [filters, setFilters] = useState<SearchFilters>(DEFAULT_FILTERS);
   const [hasSearched, setHasSearched] = useState(false);
+  const [fromCache, setFromCache] = useState(false);
+  const lastSearchKeyRef = useRef("");
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     setFilters(getSavedFilters());
@@ -44,9 +48,26 @@ export default function HomePage() {
     const trimmed = searchTerm.trim();
     if (!trimmed) return;
 
+    const searchKey = buildSearchCacheKey(trimmed, filters);
+
+    // Avoid duplicate in-flight submissions
+    if (loadingRef.current) return;
+
+    // Skip immediate identical re-search when results are already on screen
+    if (
+      searchKey === lastSearchKeyRef.current &&
+      hasSearched &&
+      !error &&
+      channels.length > 0
+    ) {
+      return;
+    }
+
+    loadingRef.current = true;
     setKeyword(trimmed);
     setLoading(true);
     setError("");
+    setFromCache(false);
     setHasSearched(true);
     setSearchedKeyword(trimmed);
     addRecentSearch(trimmed);
@@ -62,11 +83,15 @@ export default function HomePage() {
 
       if (!res.ok) {
         setChannels([]);
+        setFromCache(false);
+        lastSearchKeyRef.current = "";
         setError(translateYouTubeError(data.error ?? "unexpected", t));
         return;
       }
 
+      lastSearchKeyRef.current = searchKey;
       setChannels(data.channels ?? []);
+      setFromCache(Boolean(data.fromCache));
       upsertChannelsFromSearch(data.channels ?? []).catch(() => {});
 
       if ((data.channels ?? []).length === 0) {
@@ -76,8 +101,11 @@ export default function HomePage() {
       }
     } catch {
       setChannels([]);
+      setFromCache(false);
+      lastSearchKeyRef.current = "";
       setError(t("errors.connectionFailed"));
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   };
@@ -124,14 +152,19 @@ export default function HomePage() {
         {showResults && (
           <section className="mt-12">
             <div className="mb-6 flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-3">
-                <h2 className="truncate text-lg font-medium text-stone-700">
-                  {t("home.resultsFor", { keyword: searchedKeyword })}
-                </h2>
-                {!loading && channels.length > 0 && (
-                  <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                    {t("common.channels", { count: channels.length })}
-                  </span>
+              <div className="flex min-w-0 flex-col gap-1">
+                <div className="flex min-w-0 items-center gap-3">
+                  <h2 className="truncate text-lg font-medium text-stone-700">
+                    {t("home.resultsFor", { keyword: searchedKeyword })}
+                  </h2>
+                  {!loading && channels.length > 0 && (
+                    <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                      {t("common.channels", { count: channels.length })}
+                    </span>
+                  )}
+                </div>
+                {!loading && fromCache && (
+                  <p className="text-xs text-stone-400">{t("home.cachedHint")}</p>
                 )}
               </div>
               <LayoutToggle layout={layout} onChange={setLayout} />
