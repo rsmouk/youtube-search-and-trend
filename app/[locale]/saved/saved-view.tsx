@@ -78,7 +78,6 @@ export default function SavedView() {
           icon="saved"
           title={t("saved.title")}
           subtitle={user ? t("saved.syncedAccount") : t("saved.localOnly")}
-          actions={<LayoutToggle layout={layout} onChange={setLayout} />}
         >
           {!user && (
             <Link
@@ -113,10 +112,11 @@ export default function SavedView() {
           </div>
         ) : (
           <>
-            <div className="mb-6">
+            <div className="mb-6 flex items-center justify-between gap-3">
               <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
                 {t("common.channels", { count: channels.length })}
               </span>
+              <LayoutToggle layout={layout} onChange={setLayout} />
             </div>
 
             <div className={cardsContainerClass(layout)}>

@@ -55,7 +55,6 @@ export default function ChannelsPage() {
           icon="channels"
           title={t("channels.title")}
           subtitle={t("channels.subtitle")}
-          actions={<LayoutToggle layout={layout} onChange={setLayout} />}
         />
 
         <div className="mb-8 rounded-2xl border border-stone-200/80 bg-white p-4 shadow-sm">
@@ -94,12 +93,13 @@ export default function ChannelsPage() {
           </div>
         </div>
 
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-6 flex items-center justify-between gap-3">
           <span className="text-sm text-stone-500">
             {loading
               ? t("channels.loading")
               : t("common.channels", { count: channels.length })}
           </span>
+          <LayoutToggle layout={layout} onChange={setLayout} />
         </div>
 
         {loading ? (

@@ -161,16 +161,13 @@ export default function AdminView() {
           title={t("admin.title")}
           subtitle={t("admin.subtitle")}
           actions={
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={openQuotaStats}
-                className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50 sm:text-sm"
-              >
-                {t("admin.quotaButton")}
-              </button>
-              <LayoutToggle layout={layout} onChange={setLayout} />
-            </div>
+            <button
+              type="button"
+              onClick={openQuotaStats}
+              className="rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-medium text-stone-700 hover:bg-stone-50 sm:text-sm"
+            >
+              {t("admin.quotaButton")}
+            </button>
           }
         />
 
@@ -211,11 +208,14 @@ export default function AdminView() {
             />
           </label>
 
-          {!loading && channels.length > 0 && (
-            <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-              {t("common.channels", { count: channels.length })}
-            </span>
-          )}
+          <div className="flex items-center gap-3">
+            {!loading && channels.length > 0 && (
+              <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                {t("common.channels", { count: channels.length })}
+              </span>
+            )}
+            <LayoutToggle layout={layout} onChange={setLayout} />
+          </div>
         </div>
 
         <p className="mb-4 text-xs text-stone-400">{t("admin.featuredHint")}</p>

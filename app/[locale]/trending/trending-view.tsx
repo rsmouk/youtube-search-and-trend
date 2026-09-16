@@ -198,12 +198,9 @@ export default function TrendingView() {
                 <NavIcon name="trending" className="h-5 w-5" />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-3">
-                  <h1 className="min-w-0 text-3xl font-semibold text-stone-800">
-                    {pageHeading}
-                  </h1>
-                  <LayoutToggle layout={layout} onChange={setLayout} />
-                </div>
+                <h1 className="min-w-0 text-3xl font-semibold text-stone-800">
+                  {pageHeading}
+                </h1>
                 <p className="mt-2 text-stone-500">{t("trending.subtitle")}</p>
                 {fromCache && cacheRemaining && (
                   <p className="mt-2 text-xs text-stone-400">
@@ -246,15 +243,18 @@ export default function TrendingView() {
         </section>
 
         <section className="mt-8">
-          <div className="mb-6 flex items-center justify-between">
-            <h2 className="text-lg font-medium text-stone-700">
-              {t("trending.trendingIn", { country: regionLabel })}
-            </h2>
-            {!loadingVideos && videos.length > 0 && (
-              <span className="rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
-                {t("common.videos", { count: videos.length })}
-              </span>
-            )}
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <h2 className="truncate text-lg font-medium text-stone-700">
+                {t("trending.trendingIn", { country: regionLabel })}
+              </h2>
+              {!loadingVideos && videos.length > 0 && (
+                <span className="shrink-0 rounded-full bg-stone-100 px-3 py-1 text-xs text-stone-500">
+                  {t("common.videos", { count: videos.length })}
+                </span>
+              )}
+            </div>
+            <LayoutToggle layout={layout} onChange={setLayout} />
           </div>
 
           {error && (
