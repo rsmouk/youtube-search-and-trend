@@ -47,10 +47,7 @@ export default function Header() {
     { href: "/channels", labelKey: "nav.channels", icon: "channels" },
     { href: "/saved", labelKey: "nav.saved", icon: "saved", showCount: true },
     ...(isAdmin
-      ? [
-          { href: "/settings", labelKey: "nav.settings", icon: "settings" as const },
-          { href: "/admin", labelKey: "nav.admin", icon: "admin" as const },
-        ]
+      ? [{ href: "/admin", labelKey: "nav.admin", icon: "admin" as const }]
       : []),
   ];
 

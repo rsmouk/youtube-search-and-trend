@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { useI18n } from "@/components/I18nProvider";
 import { useLocalePath } from "@/lib/use-locale-path";
+import NavIcon from "@/components/NavIcon";
 
 export default function UserMenu() {
   const { user, profile, signOut } = useAuth();
@@ -109,6 +110,7 @@ export default function UserMenu() {
                   onClick={() => setOpen(false)}
                   className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm text-stone-700 transition-colors hover:bg-stone-50"
                 >
+                  <NavIcon name="settings" className="h-4 w-4 text-stone-400" />
                   {t("nav.settings")}
                 </Link>
               </>
