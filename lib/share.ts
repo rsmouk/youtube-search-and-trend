@@ -21,3 +21,18 @@ export async function shareChannelPage(
   await navigator.clipboard.writeText(url);
   return "copied";
 }
+
+export async function shareCurrentPage(
+  title?: string
+): Promise<"shared" | "copied"> {
+  const url = window.location.href;
+  const shareTitle = title || document.title;
+
+  if (navigator.share) {
+    await navigator.share({ title: shareTitle, url });
+    return "shared";
+  }
+
+  await navigator.clipboard.writeText(url);
+  return "copied";
+}

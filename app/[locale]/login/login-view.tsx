@@ -104,43 +104,6 @@ function LoginForm() {
     }
   };
 
-  const handleOAuth = async (provider: "google" | "facebook" | "twitter") => {
-    if (!configured) {
-      setError(t("login.supabaseNotConfigured"));
-      return;
-    }
-
-    setLoading(true);
-    setError("");
-
-    try {
-      const supabase = createClient();
-      const { data, error: oauthError } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(lp("/"))}`,
-        },
-      });
-
-      if (oauthError) {
-        setError(translateAuthError(oauthError.message));
-        setLoading(false);
-        return;
-      }
-
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-
-      setError(t("login.oauthStartFailed"));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("login.oauthFailed"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
       <PageTitle title={mode === "signup" ? t("login.signupTitle") : t("seo.loginTitle")} />
@@ -160,40 +123,7 @@ function LoginForm() {
             </div>
           )}
 
-          <div className="mt-6 space-y-2">
-            <button
-              type="button"
-              disabled={loading || !configured}
-              onClick={() => handleOAuth("google")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 py-3 text-sm text-stone-700 hover:bg-stone-50 disabled:opacity-50"
-            >
-              Google
-            </button>
-            <button
-              type="button"
-              disabled={loading || !configured}
-              onClick={() => handleOAuth("facebook")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 py-3 text-sm text-stone-700 hover:bg-stone-50 disabled:opacity-50"
-            >
-              Facebook
-            </button>
-            <button
-              type="button"
-              disabled={loading || !configured}
-              onClick={() => handleOAuth("twitter")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 py-3 text-sm text-stone-700 hover:bg-stone-50 disabled:opacity-50"
-            >
-              X (Twitter)
-            </button>
-          </div>
-
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-stone-200" />
-            <span className="text-xs text-stone-400">{t("login.orEmail")}</span>
-            <div className="h-px flex-1 bg-stone-200" />
-          </div>
-
-          <form onSubmit={handleEmailAuth} className="space-y-3">
+          <form onSubmit={handleEmailAuth} className="mt-6 space-y-3">
             <input
               type="email"
               required
