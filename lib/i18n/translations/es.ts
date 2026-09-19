@@ -10,7 +10,7 @@ export const es: TranslationDict = {
     admin: "Admin",
     login: "Entrar",
     back: "Volver",
-    appName: "Canales de YouTube",
+    appName: "Tube Discover",
     appTagline: "Buscar por palabra clave",
   },
   common: {
@@ -297,9 +297,9 @@ export const es: TranslationDict = {
     all: "Todas las categorías",
   },
   seo: {
-    siteName: "Canales de YouTube",
-    titleTemplate: "%s | Canales de YouTube",
-    defaultTitle: "Directorio de canales de YouTube",
+    siteName: "Tube Discover",
+    titleTemplate: "%s | Tube Discover",
+    defaultTitle: "Tube Discover",
     defaultDescription:
       "Descubre canales de YouTube por palabra clave y explora tendencias por país y categoría.",
     homeTitle: "Descubre canales de YouTube",

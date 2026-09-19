@@ -2,13 +2,13 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "YouTube Channels Directory",
-    short_name: "YT Channels",
+    name: "Tube Discover",
+    short_name: "Tube Discover",
     description: "Discover YouTube channels by keyword search",
     start_url: "/",
     display: "standalone",
     background_color: "#f7f6f3",
-    theme_color: "#292524",
+    theme_color: "#000000",
     orientation: "portrait-primary",
     lang: "en",
     dir: "ltr",

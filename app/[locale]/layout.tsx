@@ -22,7 +22,7 @@ const notoSansArabic = Noto_Sans_Arabic({
 });
 
 export const viewport: Viewport = {
-  themeColor: "#292524",
+    themeColor: "#000000",
 };
 
 export function generateStaticParams() {

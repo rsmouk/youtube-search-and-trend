@@ -48,10 +48,8 @@ export default function PwaInstallPrompt() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-stone-200 bg-white/95 p-4 shadow-[0_-4px_24px_rgba(0,0,0,0.08)] backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-stone-800 text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
-            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-          </svg>
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-black text-lg font-bold leading-none text-white">
+          Y
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-stone-800">{t("pwa.installTitle")}</p>

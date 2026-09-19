@@ -10,7 +10,7 @@ export const ar: TranslationDict = {
     admin: "الإدارة",
     login: "دخول",
     back: "رجوع",
-    appName: "قنوات يوتيوب",
+    appName: "Tube Discover",
     appTagline: "بحث حسب الكلمة",
   },
   common: {
@@ -291,9 +291,9 @@ export const ar: TranslationDict = {
     all: "كل التصنيفات",
   },
   seo: {
-    siteName: "دليل قنوات يوتيوب",
-    titleTemplate: "%s | دليل قنوات يوتيوب",
-    defaultTitle: "دليل قنوات يوتيوب",
+    siteName: "Tube Discover",
+    titleTemplate: "%s | Tube Discover",
+    defaultTitle: "Tube Discover",
     defaultDescription:
       "اكتشف قنوات يوتيوب بالكلمة المفتاحية واستكشف فيديوهات الترند حسب الدولة والتصنيف.",
     homeTitle: "اكتشف قنوات يوتيوب",
@@ -305,14 +305,14 @@ export const ar: TranslationDict = {
     trendingCategoryTitle: "ترند {category} في {country}",
     trendingCategoryDescription:
       "أبرز فيديوهات {category} الرائجة على يوتيوب في {country} الآن.",
-    channelsTitle: "دليل قنوات يوتيوب",
+    channelsTitle: "دليل Tube Discover",
     channelsDescription:
       "تصفح جميع قنوات يوتيوب المكتشفة في هذا الموقع مع الفلاتر والاختيارات المميزة.",
     savedTitle: "إعجاباتي",
     savedDescription: "قنوات يوتيوب التي أعجبت بها في هذا الموقع.",
     channelTitle: "{name} — قناة يوتيوب",
     channelDescription:
-      "شاهد أحدث الفيديوهات وإحصائيات {name} في دليل قنوات يوتيوب.",
+      "شاهد أحدث الفيديوهات وإحصائيات {name} في Tube Discover.",
     channelFallbackDescription: "ملف قناة يوتيوب مع الإحصائيات وأحدث الفيديوهات.",
     loginTitle: "تسجيل الدخول",
     loginDescription: "سجّل الدخول للإعجاب بقنوات يوتيوب ومزامنتها عبر الأجهزة.",

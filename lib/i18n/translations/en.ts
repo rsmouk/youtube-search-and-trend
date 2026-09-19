@@ -8,7 +8,7 @@ export const en = {
     admin: "Admin",
     login: "Sign in",
     back: "Back",
-    appName: "YouTube Channels",
+    appName: "Tube Discover",
     appTagline: "Search by keyword",
   },
   common: {
@@ -289,9 +289,9 @@ export const en = {
     all: "All categories",
   },
   seo: {
-    siteName: "YouTube Channels",
-    titleTemplate: "%s | YouTube Channels",
-    defaultTitle: "YouTube Channels Directory",
+    siteName: "Tube Discover",
+    titleTemplate: "%s | Tube Discover",
+    defaultTitle: "Tube Discover",
     defaultDescription:
       "Discover YouTube channels by keyword and explore trending videos by country and category.",
     homeTitle: "Discover YouTube Channels",
@@ -303,14 +303,14 @@ export const en = {
     trendingCategoryTitle: "{category} trending in {country}",
     trendingCategoryDescription:
       "Top trending {category} videos on YouTube in {country} right now.",
-    channelsTitle: "YouTube channel directory",
+    channelsTitle: "Tube Discover directory",
     channelsDescription:
       "Browse all YouTube channels discovered on this site, with filters and featured picks.",
     savedTitle: "My likes",
     savedDescription: "YouTube channels you liked on this site.",
     channelTitle: "{name} — YouTube channel",
     channelDescription:
-      "Watch latest videos and stats for {name} on YouTube Channels Directory.",
+      "Watch latest videos and stats for {name} on Tube Discover.",
     channelFallbackDescription: "YouTube channel profile, stats, and latest videos.",
     loginTitle: "Sign in",
     loginDescription: "Sign in to like YouTube channels and sync them across devices.",
