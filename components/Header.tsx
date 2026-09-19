@@ -10,6 +10,7 @@ import UserMenu from "@/components/UserMenu";
 import NavIcon from "@/components/NavIcon";
 import { fetchLikedCount, LIKES_CHANGED } from "@/lib/likes-service";
 import { stripLocale, useLocalePath } from "@/lib/use-locale-path";
+import NavbarBannerAd from "@/components/NavbarBannerAd";
 
 type NavLink = {
   href: string;
@@ -76,6 +77,7 @@ export default function Header() {
   };
 
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 sm:bg-white/70 sm:backdrop-blur-md">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-1.5 sm:gap-2">
@@ -194,5 +196,7 @@ export default function Header() {
         })}
       </nav>
     </header>
+    <NavbarBannerAd />
+    </>
   );
 }
