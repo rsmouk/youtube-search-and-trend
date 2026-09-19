@@ -26,7 +26,7 @@ import PageTitle from "@/components/PageTitle";
 const SKELETON_COUNT = 6;
 
 export default function HomePage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { layout, setLayout } = useCardLayout();
   const [keyword, setKeyword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -132,7 +132,9 @@ export default function HomePage() {
       const nextChannels = data.channels ?? [];
       lastSearchKeyRef.current = searchKey;
       setChannels(nextChannels);
-      upsertChannelsFromSearch(nextChannels).catch(() => {});
+      const channelLanguage =
+        filters.relevanceLanguage || locale;
+      upsertChannelsFromSearch(nextChannels, channelLanguage).catch(() => {});
       persistSession({
         keyword: trimmed,
         searchedKeyword: trimmed,

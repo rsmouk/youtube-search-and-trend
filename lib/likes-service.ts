@@ -47,14 +47,15 @@ export async function fetchLikeCount(channelId: string): Promise<number> {
 export async function toggleChannelLike(
   channel: Channel,
   userId: string,
-  currentlyLiked: boolean
+  currentlyLiked: boolean,
+  language?: string
 ): Promise<{ liked: boolean; likeCount: number } | null> {
   const thumbnail =
     channel.snippet.thumbnails.medium?.url ??
     channel.snippet.thumbnails.default?.url ??
     "";
 
-  await ensureSiteChannel(channelToSaved(channel, thumbnail));
+  await ensureSiteChannel(channelToSaved(channel, thumbnail), language);
 
   if (currentlyLiked) {
     const ok = await unlikeChannel(userId, channel.id);

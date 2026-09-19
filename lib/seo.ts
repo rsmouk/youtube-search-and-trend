@@ -12,6 +12,10 @@ export function getSiteUrl(): string {
 
 export function localePath(locale: Locale, path = ""): string {
   const clean = path.startsWith("/") ? path : path ? `/${path}` : "";
+  // English is the default locale and uses unprefixed URLs (/ not /en)
+  if (locale === "en") {
+    return clean || "/";
+  }
   if (!clean || clean === "/") return `/${locale}`;
   return `/${locale}${clean}`;
 }

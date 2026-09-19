@@ -6,6 +6,7 @@ import LayoutToggle, { cardsContainerClass } from "@/components/LayoutToggle";
 import { useI18n } from "@/components/I18nProvider";
 import { getFeaturedChannels } from "@/lib/channels-db";
 import { useCardLayout } from "@/lib/use-card-layout";
+import { useLocale } from "@/lib/use-locale-path";
 import type { Channel } from "@/lib/types";
 
 interface SuggestedChannelsProps {
@@ -14,17 +15,24 @@ interface SuggestedChannelsProps {
 
 export default function SuggestedChannels({ onHasSuggestions }: SuggestedChannelsProps) {
   const { t } = useI18n();
+  const locale = useLocale();
   const { layout, setLayout } = useCardLayout();
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getFeaturedChannels().then((data) => {
+    let active = true;
+    setLoading(true);
+    getFeaturedChannels(locale).then((data) => {
+      if (!active) return;
       setChannels(data);
       onHasSuggestions?.(data.length > 0);
       setLoading(false);
     });
-  }, [onHasSuggestions]);
+    return () => {
+      active = false;
+    };
+  }, [locale, onHasSuggestions]);
 
   if (loading || channels.length === 0) return null;
 

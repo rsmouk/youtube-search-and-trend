@@ -61,7 +61,7 @@ export const fr: TranslationDict = {
     search: "Rechercher",
     showFilters: "Afficher les filtres",
     hideFilters: "Masquer les filtres",
-    suggested: "Chaînes les plus aimées",
+    suggested: "Chaînes suggérées",
     cachedHint: "Depuis le cache — aucun quota API utilisé",
     gridView: "Vue grille",
     rowView: "Vue liste",

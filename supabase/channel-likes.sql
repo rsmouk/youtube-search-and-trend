@@ -93,7 +93,7 @@ begin
   insert into public.site_channels (
     channel_id, title, thumbnail_url, subscriber_count, description,
     custom_url, country, view_count, video_count, hidden_subscriber_count,
-    search_count, first_seen_at, last_seen_at
+    language, search_count, first_seen_at, last_seen_at
   ) values (
     ch->>'channel_id',
     coalesce(ch->>'title', 'Unknown'),
@@ -105,6 +105,7 @@ begin
     coalesce(ch->>'view_count', '0'),
     coalesce(ch->>'video_count', '0'),
     coalesce((ch->>'hidden_subscriber_count')::boolean, false),
+    nullif(ch->>'language', ''),
     0,
     now(),
     now()
@@ -119,6 +120,7 @@ begin
     view_count = excluded.view_count,
     video_count = excluded.video_count,
     hidden_subscriber_count = excluded.hidden_subscriber_count,
+    language = coalesce(site_channels.language, excluded.language),
     last_seen_at = now();
 end;
 $$;

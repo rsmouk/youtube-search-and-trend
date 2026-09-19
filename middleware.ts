@@ -2,23 +2,11 @@ import { type NextRequest, NextResponse } from "next/server";
 import { DEFAULT_LOCALE, isValidLocale, LOCALES } from "@/lib/i18n";
 import { updateSession } from "@/lib/supabase/middleware";
 
-function getPreferredLocale(request: NextRequest): string {
-  const cookieLocale = request.cookies.get("app_locale")?.value;
-  if (cookieLocale && isValidLocale(cookieLocale)) return cookieLocale;
-
-  const accept = request.headers.get("accept-language") ?? "";
-  const preferred = accept
-    .split(",")
-    .map((part) => part.split(";")[0]?.trim().toLowerCase())
-    .filter(Boolean);
-
-  for (const lang of preferred) {
-    const base = lang.split("-")[0];
-    if (isValidLocale(base)) return base;
-  }
-
-  return DEFAULT_LOCALE;
-}
+const LOCALE_COOKIE = {
+  path: "/",
+  maxAge: 60 * 60 * 24 * 365,
+  sameSite: "lax" as const,
+};
 
 function pathnameHasLocale(pathname: string): boolean {
   return LOCALES.some(
@@ -38,28 +26,28 @@ export async function middleware(request: NextRequest) {
     return await updateSession(request);
   }
 
-  if (!pathnameHasLocale(pathname)) {
-    const locale = getPreferredLocale(request);
+  // Canonical English URLs: /en → /
+  if (pathname === "/en" || pathname.startsWith("/en/")) {
     const url = request.nextUrl.clone();
-    url.pathname =
-      pathname === "/" ? `/${locale}` : `/${locale}${pathname}`;
+    url.pathname = pathname.slice(3) || "/";
     const response = NextResponse.redirect(url);
-    response.cookies.set("app_locale", locale, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
+    response.cookies.set("app_locale", DEFAULT_LOCALE, LOCALE_COOKIE);
+    return response;
+  }
+
+  // Unprefixed paths serve English (rewrite, no redirect)
+  if (!pathnameHasLocale(pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === "/" ? "/en" : `/en${pathname}`;
+    const response = await updateSession(request, { rewriteTo: url });
+    response.cookies.set("app_locale", DEFAULT_LOCALE, LOCALE_COOKIE);
     return response;
   }
 
   const localeFromPath = pathname.split("/")[1];
   const sessionResponse = await updateSession(request);
   if (localeFromPath && isValidLocale(localeFromPath)) {
-    sessionResponse.cookies.set("app_locale", localeFromPath, {
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-      sameSite: "lax",
-    });
+    sessionResponse.cookies.set("app_locale", localeFromPath, LOCALE_COOKIE);
   }
   return sessionResponse;
 }

@@ -14,7 +14,7 @@ import {
   LIKES_CHANGED,
   toggleChannelLike,
 } from "@/lib/likes-service";
-import { useLocalePath } from "@/lib/use-locale-path";
+import { useLocalePath, useLocale } from "@/lib/use-locale-path";
 import { useEffect, useState } from "react";
 
 interface ChannelCardProps {
@@ -31,6 +31,7 @@ export default function ChannelCard({
   const { user } = useAuth();
   const { t } = useI18n();
   const lp = useLocalePath();
+  const locale = useLocale();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(channel.likeCount ?? 0);
   const [checking, setChecking] = useState(true);
@@ -71,7 +72,7 @@ export default function ChannelCard({
     }
     if (busy) return;
     setBusy(true);
-    const result = await toggleChannelLike(channel, user.id, liked);
+    const result = await toggleChannelLike(channel, user.id, liked, locale);
     setBusy(false);
     if (!result) return;
     setLiked(result.liked);

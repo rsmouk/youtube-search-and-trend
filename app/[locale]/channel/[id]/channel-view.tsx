@@ -154,7 +154,7 @@ export default function ChannelView({
     }
     if (likeBusy) return;
     setLikeBusy(true);
-    const result = await toggleChannelLike(channel, user.id, liked);
+    const result = await toggleChannelLike(channel, user.id, liked, locale);
     setLikeBusy(false);
     if (!result) return;
     setLiked(result.liked);

@@ -10,6 +10,7 @@ export interface SiteChannelRow {
   description: string | null;
   custom_url: string | null;
   country: string | null;
+  language: string | null;
   view_count: string | null;
   video_count: string | null;
   hidden_subscriber_count: boolean | null;
@@ -22,12 +23,13 @@ export interface SiteChannelRow {
 
 export interface ChannelFilters {
   country?: string;
+  language?: string;
   featured?: boolean;
   search?: string;
   minLikes?: number;
 }
 
-function channelToPayload(channel: Channel) {
+function channelToPayload(channel: Channel, language?: string) {
   const thumbnail =
     channel.snippet.thumbnails.medium?.url ??
     channel.snippet.thumbnails.default?.url ??
@@ -41,6 +43,7 @@ function channelToPayload(channel: Channel) {
     description: channel.snippet.description ?? "",
     custom_url: channel.snippet.customUrl ?? null,
     country: channel.snippet.country ?? null,
+    language: language || null,
     view_count: channel.statistics.viewCount ?? "0",
     video_count: channel.statistics.videoCount ?? "0",
     hidden_subscriber_count: channel.statistics.hiddenSubscriberCount ?? false,
@@ -87,11 +90,12 @@ export function siteRowToSaved(row: SiteChannelRow): SavedChannel {
 }
 
 export async function upsertChannelsFromSearch(
-  channels: Channel[]
+  channels: Channel[],
+  language?: string
 ): Promise<void> {
   if (channels.length === 0 || !isSupabaseConfigured()) return;
   const supabase = createClient();
-  const payload = channels.map(channelToPayload);
+  const payload = channels.map((ch) => channelToPayload(ch, language));
   await supabase.rpc("upsert_site_channels", { channels: payload });
 }
 
@@ -109,13 +113,16 @@ export async function getSiteChannelById(
   return data as SiteChannelRow;
 }
 
-export async function getFeaturedChannels(): Promise<Channel[]> {
+export async function getFeaturedChannels(
+  language = "en"
+): Promise<Channel[]> {
   if (!isSupabaseConfigured()) return [];
   const supabase = createClient();
   const { data, error } = await supabase
     .from("site_channels")
     .select("*")
     .eq("featured", true)
+    .eq("language", language)
     .order("like_count", { ascending: false })
     .order("last_seen_at", { ascending: false })
     .limit(12);
@@ -140,6 +147,9 @@ export async function getAllSiteChannels(
 
   if (filters.country) {
     query = query.eq("country", filters.country);
+  }
+  if (filters.language) {
+    query = query.eq("language", filters.language);
   }
   if (filters.featured === true) {
     query = query.eq("featured", true);
@@ -184,7 +194,10 @@ export async function setChannelFeatured(
   return { ok: true };
 }
 
-export async function ensureSiteChannel(channel: SavedChannel): Promise<boolean> {
+export async function ensureSiteChannel(
+  channel: SavedChannel,
+  language?: string
+): Promise<boolean> {
   if (!isSupabaseConfigured()) return false;
   const supabase = createClient();
   const { error } = await supabase.rpc("ensure_site_channel", {
@@ -196,6 +209,7 @@ export async function ensureSiteChannel(channel: SavedChannel): Promise<boolean>
       description: channel.description ?? "",
       custom_url: channel.customUrl ?? null,
       country: channel.country ?? null,
+      language: language || null,
       view_count: channel.viewCount ?? "0",
       video_count: channel.videoCount ?? "0",
       hidden_subscriber_count: channel.hiddenSubscriberCount ?? false,

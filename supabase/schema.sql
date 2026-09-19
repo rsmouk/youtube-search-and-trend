@@ -62,6 +62,7 @@ create table if not exists public.site_channels (
   view_count text default '0',
   video_count text default '0',
   hidden_subscriber_count boolean default false,
+  language text,
   featured boolean not null default false,
   search_count integer not null default 1,
   like_count integer not null default 0,
@@ -74,6 +75,8 @@ create index if not exists idx_site_channels_featured on public.site_channels (f
 create index if not exists idx_site_channels_country on public.site_channels (country);
 create index if not exists idx_site_channels_title on public.site_channels (title);
 create index if not exists idx_site_channels_like_count on public.site_channels (like_count desc);
+create index if not exists idx_site_channels_language_featured
+  on public.site_channels (language, featured, like_count desc);
 
 alter table public.site_channels enable row level security;
 
@@ -154,7 +157,7 @@ begin
     insert into public.site_channels (
       channel_id, title, thumbnail_url, subscriber_count, description,
       custom_url, country, view_count, video_count, hidden_subscriber_count,
-      search_count, first_seen_at, last_seen_at
+      language, search_count, first_seen_at, last_seen_at
     ) values (
       ch->>'channel_id',
       ch->>'title',
@@ -166,6 +169,7 @@ begin
       coalesce(ch->>'view_count', '0'),
       coalesce(ch->>'video_count', '0'),
       coalesce((ch->>'hidden_subscriber_count')::boolean, false),
+      nullif(ch->>'language', ''),
       1,
       now(),
       now()
@@ -180,6 +184,7 @@ begin
       view_count = excluded.view_count,
       video_count = excluded.video_count,
       hidden_subscriber_count = excluded.hidden_subscriber_count,
+      language = coalesce(site_channels.language, excluded.language),
       search_count = site_channels.search_count + 1,
       last_seen_at = now();
   end loop;
@@ -285,7 +290,7 @@ begin
   insert into public.site_channels (
     channel_id, title, thumbnail_url, subscriber_count, description,
     custom_url, country, view_count, video_count, hidden_subscriber_count,
-    search_count, first_seen_at, last_seen_at
+    language, search_count, first_seen_at, last_seen_at
   ) values (
     ch->>'channel_id',
     coalesce(ch->>'title', 'Unknown'),
@@ -297,6 +302,7 @@ begin
     coalesce(ch->>'view_count', '0'),
     coalesce(ch->>'video_count', '0'),
     coalesce((ch->>'hidden_subscriber_count')::boolean, false),
+    nullif(ch->>'language', ''),
     0,
     now(),
     now()
@@ -311,6 +317,7 @@ begin
     view_count = excluded.view_count,
     video_count = excluded.video_count,
     hidden_subscriber_count = excluded.hidden_subscriber_count,
+    language = coalesce(site_channels.language, excluded.language),
     last_seen_at = now();
 end;
 $$;
